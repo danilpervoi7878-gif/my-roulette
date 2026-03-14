@@ -3,86 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Game</title>
+    <title>Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            background-color: #fce4ec; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            height: 100vh;
-            margin: 0; 
-            overflow: hidden; 
+        body { background-color: #fce4ec; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .wheel-box { position: relative; width: 300px; height: 300px; }
+        #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .arrow { 
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent;
+            border-top: 30px solid #ff4081; z-index: 10;
         }
-        .wheel-container { 
-            position: relative; 
-            width: 320px; 
-            height: 320px; 
+        .btn { 
+            margin-top: 40px; background: #ff4081; color: white; border: none; 
+            padding: 15px 50px; font-size: 20px; border-radius: 25px; cursor: pointer; font-weight: bold;
         }
-        #canvas { 
-            width: 100%; 
-            height: 100%; 
-            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); 
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
-        }
-        .pointer { 
-            position: absolute; 
-            top: -20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 40px; 
-            z-index: 10; 
-        }
-        .btn-play { 
-            margin-top: 50px; 
-            background: linear-gradient(45deg, #ff4081, #ec407a); 
-            color: white; 
-            border: none; 
-            border-radius: 30px; 
-            padding: 18px 70px; 
-            font-size: 22px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            box-shadow: 0 6px 20px rgba(255,64,129,0.4); 
-            transition: 0.3s;
-        }
-        .btn-play:active { transform: scale(0.95); }
-        .btn-play:disabled { background: #bdbdbd; box-shadow: none; }
     </style>
 </head>
 <body>
-    <div class="wheel-container">
-        <img src="https://cdn-icons-png.flaticon.com/512/2611/2611391.png" class="pointer" alt="pointer">
+    <div class="wheel-box">
+        <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
-    <button class="btn-play" id="spinBtn" onclick="requestSpin()">КРУТИТЬ 🎰</button>
+    <button class="btn" id="spinBtn" onclick="spin()">КРУТИТЬ 🎰</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const sectors = ["🍑", "💋", "🔒", "📞", "💃", "📸", "📼", "💦", "🎁", "💎", "👯", "🔥"];
         const colors = ["#880e4f", "#f06292", "#c2185b", "#f8bbd0", "#880e4f", "#f06292", "#c2185b", "#f8bbd0", "#880e4f", "#f06292", "#c2185b", "#f8bbd0"];
-        
-        const numSectors = sectors.length;
-        const arc = 2 * Math.PI / numSectors;
 
-        function draw() {
-            ctx.clearRect(0, 0, 500, 500);
-            for (let i = 0; i < numSectors; i++) {
+        function drawWheel() {
+            const arc = (2 * Math.PI) / sectors.length;
+            for (let i = 0; i < sectors.length; i++) {
                 const angle = i * arc;
                 ctx.fillStyle = colors[i];
                 ctx.beginPath();
                 ctx.moveTo(250, 250);
                 ctx.arc(250, 250, 240, angle, angle + arc);
                 ctx.fill();
-                ctx.stroke();
                 ctx.save();
                 ctx.translate(250, 250);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "white";
+                ctx.font = "bold 40px Arial";
+                ctx.textAlign = "right";
+                ctx.fillText(sectors[i], 220, 15);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+
+        function spin() {
+            document.getElementById('spinBtn').disabled = true;
+            // Посылаем сигнал боту
+            tg.sendData("spin_request");
+            
+            // Анимация кручения
+            const rotation = Math.floor(3000 + Math.random() * 3000);
+            canvas.style.transform = `rotate(${rotation}deg)`;
+            
+            // Закрываем через 4 секунды
+            setTimeout(() => { tg.close(); }, 4200);
+        }
+    </script>
+</body>
+</html>
