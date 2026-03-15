@@ -58,7 +58,7 @@
 <body>
     <div class="header" id="headerBox">
         <div style="font-size: 11px; opacity: 0.7;">ВАШ БАЛАНС</div>
-        <div class="balance" id="balanceText">0 ⭐</div>
+        <div class="balance" id="balanceText">1000 ⭐</div>
     </div>
     <div class="info-btn" onclick="toggleModal('prizesModal', true)">🎁</div>
 
@@ -77,7 +77,12 @@
     </div>
 
     <div id="prizesModal" class="modal"><div class="card"><h3 style="text-align:center">ПРИЗЫ</h3><div id="pList"></div><button class="spin-btn" style="width:100%; margin-top:15px;" onclick="toggleModal('prizesModal', false)">ЗАКРЫТЬ</button></div></div>
-    <div id="winModal" class="modal"><h2 style="color:var(--gold)">ВЫИГРЫШ!</h2><div id="winEmoji" style="font-size:100px; margin:20px;"></div><button class="spin-btn" style="width:200px" onclick="nextOrClose()">ДАЛЕЕ</button></div>
+    
+    <div id="winModal" class="modal">
+        <h2 style="color:var(--gold)">ВЫИГРЫШ!</h2>
+        <div id="winEmoji" style="font-size:100px; margin:20px;"></div>
+        <button class="spin-btn" style="width:250px" onclick="collectAndClose()">ЗАБРАТЬ ПРИЗ 🎁</button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -90,14 +95,16 @@
         let currentPrice = 50;
         let rotation = 0;
         let isSpinning = false;
+        let lastWinEmoji = "";
         
-        const prizeNames = {"📸":"Фото","🎬":"Видео","💦":"Сквирт","🎁":"5+2","💎":"8+4","👯":"Подружка","🔥":"Бонус","🎰":"Джекпот","💰":"Кешбэк","🎯":"Цель"};
-        const sectors = Object.keys(prizeNames);
+        const prizeNames = {"📸":"Фото","🎬":"Видео","🍳":"Омлет","🎁":"Пак 8+2","🎰":"Джекпот"};
+        const sectors = ["📸", "🎬", "🍳", "🎁", "🎰", "📸", "🎬", "🍳", "🎁", "🎰"];
         
         document.getElementById('balanceText').innerText = balance + " ⭐";
 
         function drawWheel() {
-            const ctx = document.getElementById('canvas').getContext('2d');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
             const arc = (Math.PI * 2) / sectors.length;
             sectors.forEach((s, i) => {
                 ctx.fillStyle = i % 2 === 0 ? "#4a0e0e" : "#1a1a1a";
@@ -107,7 +114,6 @@
             });
         }
 
-        // Лампочки
         const ring = document.getElementById('lightsRing');
         for (let i = 0; i < 24; i++) {
             const led = document.createElement('div');
@@ -134,13 +140,10 @@
             document.getElementById('headerBox').classList.add('deduct');
             setTimeout(() => document.getElementById('headerBox').classList.remove('deduct'), 500);
 
-            for (let i = 0; i < prizeQueue.length; i++) {
-                await runRotation(prizeQueue[i]);
-                if (i < prizeQueue.length - 1) await new Promise(r => setTimeout(r, 1000));
-            }
-            
-            tg.sendData(currentPrice + "|" + prizeQueue.join(','));
-            setTimeout(() => tg.close(), 2000);
+            // Запускаем вращение к первому призу из очереди
+            let winEmoji = prizeQueue[0];
+            lastWinEmoji = winEmoji;
+            await runRotation(winEmoji);
         }
 
         function runRotation(emoji) {
@@ -154,10 +157,21 @@
                 setTimeout(() => {
                     document.getElementById('winEmoji').innerText = emoji;
                     toggleModal('winModal', true);
-                    confetti({ particleCount: 100 });
-                    setTimeout(() => { toggleModal('winModal', false); resolve(); }, 3000);
-                }, 4500);
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    resolve();
+                }, 4700);
             });
+        }
+
+        // Функция кнопки "ЗАБРАТЬ ПРИЗ"
+        function collectAndClose() {
+            // Отправляем данные боту в формате win|смайлик
+            tg.sendData("win|" + lastWinEmoji);
+            
+            // На всякий случай дублируем закрытие через полсекунды
+            setTimeout(() => {
+                tg.close();
+            }, 500);
         }
 
         drawWheel();
