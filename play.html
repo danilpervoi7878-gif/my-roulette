@@ -12,27 +12,16 @@
             display: flex; flex-direction: column; align-items: center; 
             margin: 0; padding: 20px; color: white; height: 100vh; overflow: hidden;
         }
-        .header { background: rgba(255,255,255,0.07); padding: 10px 30px; border-radius: 15px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .header { background: rgba(255,255,255,0.07); padding: 10px 30px; border-radius: 15px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         .balance { font-size: 28px; font-weight: bold; color: var(--acc); }
-        
-        /* Увеличили колесо */
-        .wheel-container { position: relative; width: 320px; height: 320px; margin-bottom: 30px; }
+        .wheel-container { position: relative; width: 330px; height: 330px; margin-bottom: 20px; }
         #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
         .arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%) rotate(180deg); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--acc); z-index: 10; filter: drop-shadow(0 0 10px var(--acc)); }
-
-        .spin-btn { 
-            background: linear-gradient(45deg, var(--sec), var(--acc));
-            color: white; border: none; width: 90%; padding: 18px; font-size: 20px; 
-            border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0,210,255,0.3);
-            margin-bottom: 25px;
-        }
-        .spin-btn:disabled { opacity: 0.5; }
-
+        .spin-btn { background: linear-gradient(45deg, var(--sec), var(--acc)); color: white; border: none; width: 90%; padding: 18px; font-size: 20px; border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0,210,255,0.3); margin-bottom: 20px; }
         .shop { display: flex; gap: 10px; width: 100%; justify-content: center; }
-        .item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; flex: 1; }
-        
-        /* Окно выигрыша */
-        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+        .item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; flex: 1; cursor: pointer; transition: 0.2s; }
+        .item:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
@@ -40,20 +29,16 @@
         <div style="font-size: 10px; opacity: 0.6;">ВАШ БАЛАНС</div>
         <div class="balance">2,500 💎</div>
     </div>
-
     <div class="wheel-container">
         <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
-
     <button class="spin-btn" id="btn" onclick="start()">КРУТИТЬ 🔥</button>
-
     <div class="shop">
-        <div class="item">⭐ 50<br><small>1 СПИН</small></div>
-        <div class="item" style="border-color: var(--acc);">⭐ 120<br><small>3 СПИНА</small></div>
-        <div class="item">⭐ 200<br><small>5 СПИНОВ</small></div>
+        <div class="item" onclick="start()">⭐ 50<br><small>1 СПИН</small></div>
+        <div class="item" style="border-color: var(--acc);" onclick="tg.showAlert('Нужно больше звезд! ⭐')">⭐ 120<br><small>3 СПИНА</small></div>
+        <div class="item" onclick="tg.showAlert('Нужно больше звезд! ⭐')">⭐ 200<br><small>5 СПИНОВ</small></div>
     </div>
-
     <div id="modal">
         <h2 style="color:var(--acc); font-size: 32px;">ПОЗДРАВЛЯЕМ!</h2>
         <div id="prize" style="font-size: 80px; margin: 20px;"></div>
@@ -66,6 +51,7 @@
         const ctx = canvas.getContext('2d');
         const sectors = ["🍎", "💰", "⭐", "🎲", "🚀", "💎", "⚡", "🔥", "🌈", "🏆", "🎯", "🎰"];
         let currentRotation = 0;
+        let isSpinning = false;
 
         function draw() {
             const arc = (2 * Math.PI) / sectors.length;
@@ -80,6 +66,8 @@
         }
 
         function start() {
+            if(isSpinning) return;
+            isSpinning = true;
             const btn = document.getElementById('btn');
             btn.disabled = true;
             
@@ -87,23 +75,29 @@
             currentRotation += spinAdd;
             canvas.style.transform = `rotate(${currentRotation}deg)`;
             
+            // Начальная вибрация
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
+            // МИКРО-ВИБРАЦИЯ ПРИ ВРАЩЕНИИ
+            let interval = setInterval(() => {
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }, 150); // Легкий "тик" каждые 150мс
+
             setTimeout(() => {
+                clearInterval(interval); // Останавливаем тиканье
                 const actual = currentRotation % 360;
                 const sectorAngle = 360 / sectors.length;
-                // Стрелка внизу (180 градусов), считаем индекс
                 const idx = Math.floor(((actual + 90) % 360) / sectorAngle);
                 const win = sectors[sectors.length - 1 - idx];
                 
                 document.getElementById('prize').innerText = win;
                 document.getElementById('modal').style.display = 'flex';
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                isSpinning = false;
             }, 4000);
         }
 
         function collect() {
-            // Только здесь отправляем данные и закрываем!
             tg.sendData("spin_done");
             tg.close();
         }
