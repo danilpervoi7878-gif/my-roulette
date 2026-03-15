@@ -6,78 +6,109 @@
     <title>Elite Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #0f0f1a; --acc: #00d2ff; --sec: #9d50bb; --gls: rgba(255, 255, 255, 0.07); }
+        :root { --acc: #00d2ff; --sec: #9d50bb; }
         body { 
-            background: radial-gradient(circle at top, #1b112e 0%, #0f0f1a 100%);
-            font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; 
-            align-items: center; margin: 0; padding: 10px; color: white; height: 100vh; overflow: hidden;
+            background: #0f0f1a; font-family: sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 20px; color: white; height: 100vh; overflow: hidden;
         }
-        .header { background: var(--gls); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 8px 25px; text-align: center; margin-bottom: 10px; }
-        .balance-value { font-size: 24px; font-weight: 900; color: var(--acc); }
-        .wheel-box { position: relative; width: 260px; height: 260px; margin-bottom: 15px; }
+        .header { background: rgba(255,255,255,0.07); padding: 10px 30px; border-radius: 15px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .balance { font-size: 28px; font-weight: bold; color: var(--acc); }
+        
+        /* Увеличили колесо */
+        .wheel-container { position: relative; width: 320px; height: 320px; margin-bottom: 30px; }
         #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
-        .arrow { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%) rotate(180deg); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid var(--acc); z-index: 10; }
-        .main-btn { background: linear-gradient(45deg, var(--sec), var(--acc)); color: white; border: none; width: 85%; padding: 14px; font-size: 18px; border-radius: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; cursor: pointer; }
-        .shop-container { display: flex; gap: 8px; width: 100%; justify-content: center; padding: 0 10px; }
-        .shop-item { background: var(--gls); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 12px; text-align: center; flex: 1; max-width: 95px; }
-        .stars { font-size: 14px; font-weight: bold; display: block; }
-        .spins { font-size: 10px; color: var(--acc); text-transform: uppercase; }
-        #winModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .win-content { text-align: center; }
+        .arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%) rotate(180deg); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--acc); z-index: 10; filter: drop-shadow(0 0 10px var(--acc)); }
+
+        .spin-btn { 
+            background: linear-gradient(45deg, var(--sec), var(--acc));
+            color: white; border: none; width: 90%; padding: 18px; font-size: 20px; 
+            border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0,210,255,0.3);
+            margin-bottom: 25px;
+        }
+        .spin-btn:disabled { opacity: 0.5; }
+
+        .shop { display: flex; gap: 10px; width: 100%; justify-content: center; }
+        .item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; flex: 1; }
+        
+        /* Окно выигрыша */
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div style="font-size: 9px; opacity: 0.5;">ВАШ БАЛАНС</div>
-        <div class="balance-value">2,500 💎</div>
+        <div style="font-size: 10px; opacity: 0.6;">ВАШ БАЛАНС</div>
+        <div class="balance">2,500 💎</div>
     </div>
-    <div class="wheel-box">
+
+    <div class="wheel-container">
         <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
-    <button class="main-btn" id="spinBtn" onclick="spin()">КРУТИТЬ 🔥</button>
-    <div class="shop-container">
-        <div class="shop-item"><span class="stars">⭐ 50</span><span class="spins">1 Спин</span></div>
-        <div class="shop-item" style="border-color: var(--acc);"><span class="stars">⭐ 120</span><span class="spins">3 Спина</span></div>
-        <div class="shop-item"><span class="stars">⭐ 200</span><span class="spins">5 Спинов</span></div>
+
+    <button class="spin-btn" id="btn" onclick="start()">КРУТИТЬ 🔥</button>
+
+    <div class="shop">
+        <div class="item">⭐ 50<br><small>1 СПИН</small></div>
+        <div class="item" style="border-color: var(--acc);">⭐ 120<br><small>3 СПИНА</small></div>
+        <div class="item">⭐ 200<br><small>5 СПИНОВ</small></div>
     </div>
-    <div id="winModal">
-        <div class="win-content">
-            <h2 style="color: var(--acc); font-size: 28px;">УДАЧНЫЙ СПИН!</h2>
-            <div id="winEmoji" style="font-size: 100px; margin: 20px 0;"></div>
-            <button onclick="tg.close()" class="main-btn" style="width: auto; padding: 10px 40px;">ЗАБРАТЬ 🎁</button>
-        </div>
+
+    <div id="modal">
+        <h2 style="color:var(--acc); font-size: 32px;">ПОЗДРАВЛЯЕМ!</h2>
+        <div id="prize" style="font-size: 80px; margin: 20px;"></div>
+        <button class="spin-btn" style="width: auto; padding: 10px 40px;" onclick="collect()">ЗАБРАТЬ 🎁</button>
     </div>
+
     <script>
         const tg = window.Telegram.WebApp;
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const sectors = ["🍎", "💰", "⭐", "🎲", "🚀", "💎", "⚡", "🔥", "🌈", "🏆", "🎯", "🎰"];
+        let currentRotation = 0;
+
         function draw() {
             const arc = (2 * Math.PI) / sectors.length;
             for (let i = 0; i < sectors.length; i++) {
                 ctx.fillStyle = (i % 2 === 0) ? "#1a1a2e" : "#242445";
-                ctx.beginPath(); ctx.moveTo(250, 250); ctx.arc(250, 250, 240, i * arc, (i + 1) * arc); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 240, i * arc, (i + 1) * arc); ctx.fill();
                 ctx.save(); ctx.translate(250, 250); ctx.rotate(i * arc + arc / 2);
-                ctx.fillStyle = "white"; ctx.font = "bold 45px Arial"; ctx.textAlign = "right"; ctx.fillText(sectors[i], 220, 15); ctx.restore();
+                ctx.fillStyle = "white"; ctx.font = "40px Arial"; ctx.textAlign = "right";
+                ctx.fillText(sectors[i], 220, 15); ctx.restore();
             }
         }
-        window.onload = () => { draw(); tg.expand(); };
-        function spin() {
-            const btn = document.getElementById('spinBtn');
-            if(btn.disabled) return;
+
+        function start() {
+            const btn = document.getElementById('btn');
             btn.disabled = true;
-            tg.sendData("spin_request");
-            const rot = Math.floor(4000 + Math.random() * 4000);
-            canvas.style.transform = `rotate(${rot}deg)`;
+            
+            const spinAdd = Math.floor(3600 + Math.random() * 3600);
+            currentRotation += spinAdd;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+            
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
             setTimeout(() => {
-                const winIdx = Math.floor(((rot % 360) + 90) / (360 / sectors.length)) % sectors.length;
-                document.getElementById('winEmoji').innerText = sectors[sectors.length - 1 - winIdx];
-                document.getElementById('winModal').style.display = 'flex';
+                const actual = currentRotation % 360;
+                const sectorAngle = 360 / sectors.length;
+                // Стрелка внизу (180 градусов), считаем индекс
+                const idx = Math.floor(((actual + 90) % 360) / sectorAngle);
+                const win = sectors[sectors.length - 1 - idx];
+                
+                document.getElementById('prize').innerText = win;
+                document.getElementById('modal').style.display = 'flex';
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }, 4000);
         }
+
+        function collect() {
+            // Только здесь отправляем данные и закрываем!
+            tg.sendData("spin_done");
+            tg.close();
+        }
+
+        window.onload = () => { draw(); tg.expand(); };
         tg.ready();
     </script>
 </body>
