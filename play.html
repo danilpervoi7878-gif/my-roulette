@@ -17,30 +17,32 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* 1. ШАПКА В ТОН ФОНА (НЕ СЕРАЯ) */
+        /* 1. ИСПРАВЛЕННАЯ ШАПКА — ТЕПЕРЬ ПРОЗРАЧНО-ЗОЛОТАЯ */
         .header { 
-            background: rgba(212, 175, 55, 0.05); padding: 8px 35px; border-radius: 20px; 
-            border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px;
+            background: rgba(212, 175, 55, 0.08) !important; 
+            padding: 8px 35px; border-radius: 20px; 
+            border: 1px solid rgba(212, 175, 55, 0.4) !important; 
+            margin-top: 10px;
             animation: balance-glow 3s infinite ease-in-out;
         }
         @keyframes balance-glow {
             0%, 100% { text-shadow: 0 0 5px var(--gold); transform: scale(1); }
-            50% { text-shadow: 0 0 15px var(--gold); transform: scale(1.03); }
+            50% { text-shadow: 0 0 20px var(--gold); transform: scale(1.03); }
         }
         .balance { font-size: 28px; font-weight: 800; color: var(--gold); }
 
         /* 2. ОЖИВШАЯ КНОПКА-ПОДАРОК */
         .info-btn {
             position: absolute; right: 15px; top: 15px; width: 40px; height: 40px;
-            background: rgba(212, 175, 55, 0.1); border: 1.5px solid var(--gold);
+            background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
             border-radius: 12px; display: flex; align-items: center; justify-content: center;
             font-size: 20px; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out;
             cursor: pointer;
         }
         @keyframes gift-wiggle { 
             0%, 100% { transform: rotate(0deg) scale(1); } 
-            25% { transform: rotate(-10deg) scale(1.1); } 
-            75% { transform: rotate(10deg) scale(1.1); } 
+            25% { transform: rotate(-12deg) scale(1.15); } 
+            75% { transform: rotate(12deg) scale(1.15); } 
         }
 
         .wheel-container { position: relative; width: 320px; height: 320px; margin: 15px 0; display: flex; align-items: center; justify-content: center; }
@@ -55,7 +57,7 @@
             background: linear-gradient(135deg, #800000 0%, #d4af37 100%); 
             color: white; border: 1px solid var(--gold); width: 95%; padding: 18px; 
             font-size: 22px; border-radius: 16px; font-weight: 900; 
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); cursor: pointer;
         }
 
         .shop { display: flex; gap: 8px; width: 100%; margin-top: 15px; }
@@ -66,10 +68,10 @@
 
         .status-text { color: var(--gold); font-weight: bold; margin-bottom: 5px; font-size: 16px; text-shadow: 0 0 10px var(--gold); }
 
-        /* МОДАЛКИ — ТЕМНЫЕ И КРАСИВЫЕ */
+        /* 3. ЯРКОЕ ОКНО ВЫИГРЫША СО СВЕЧЕНИЕМ ПРИЗА */
         .modal { 
             display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%); 
+            background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%) !important; 
             z-index:1000; flex-direction:column; align-items:center; justify-content:center; 
             backdrop-filter: blur(15px); 
         }
@@ -79,8 +81,12 @@
             color: var(--soft-gold); border: 2px solid var(--gold); 
         }
         #winEmojis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px; }
-        .mini-emoji { font-size: 55px; filter: drop-shadow(0 0 15px var(--gold)); animation: pop 0.4s ease-out; }
-        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        .mini-emoji { 
+            font-size: 65px; 
+            filter: drop-shadow(0 0 25px var(--gold)); /* СВЕЧЕНИЕ ПРИЗА */
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         #list { max-height: 250px; overflow-y: auto; padding-right: 5px; }
         .prize-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.2); font-weight: bold; }
@@ -107,9 +113,9 @@
     </div>
 
     <div id="winModal" class="modal">
-        <h1 style="color:var(--gold); text-align: center; margin-top: 0; text-transform: uppercase;">Твой выигрыш!</h1>
+        <h1 style="color:var(--gold); text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 2px;">Твой выигрыш!</h1>
         <div id="winEmojis"></div>
-        <button class="spin-btn" style="width:260px; box-shadow: 0 0 30px var(--gold);" onclick="collect()">ЗАБРАТЬ ВСЁ 🎁</button>
+        <button class="spin-btn" style="width:260px; box-shadow: 0 0 40px var(--gold);" onclick="collect()">ЗАБРАТЬ ВСЁ 🎁</button>
     </div>
 
     <div id="prizesModal" class="modal" onclick="this.style.display='none'">
@@ -122,6 +128,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.setHeaderColor('#2c0a0a'); // Цвет статус-бара ТГ
+        
         const prizeNames = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
         const sectors = Object.keys(prizeNames);
         let params = new URLSearchParams(window.location.search);
@@ -187,9 +195,9 @@
             return new Promise((resolve) => {
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                 
-                const hapticInterval = setInterval(() => {
+                const hInterval = setInterval(() => {
                     if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                }, 120);
+                }, 130);
 
                 const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0];
                 let rand = Math.random() * 100, sum = 0, target = 0;
@@ -201,7 +209,7 @@
                 canvas.style.transform = `rotate(${rotation}deg)`;
 
                 setTimeout(() => {
-                    clearInterval(hapticInterval);
+                    clearInterval(hInterval);
                     winList.push(sectors[target]);
                     if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     resolve();
@@ -214,13 +222,15 @@
             container.innerHTML = winList.map(s => `<div class="mini-emoji">${s}</div>`).join('');
             document.getElementById('winModal').style.display = 'flex';
             document.getElementById('status').innerText = "ГОТОВО!";
-            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
+            
+            // 4. ГАРАНТИРОВАННЫЙ САЛЮТ
+            confetti({ particleCount: 350, spread: 100, origin: { y: 0.6 } });
         }
 
         function collect() {
             tg.sendData(price + "|" + winList.join(','));
             setTimeout(() => {
-                tg.openTelegramLink("https://t.me/KittyCam78"); 
+                tg.openTelegramLink("https://t.me/Rulletik_bot"); 
                 tg.close();
             }, 150);
         }
