@@ -6,7 +6,7 @@
     <title>Elite Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --acc: #00d2ff; --sec: #9d50bb; }
+        :root { --acc: #00d2ff; --sec: #9d50bb; --gold: #FFD700; }
         body { 
             background: #0f0f1a; font-family: sans-serif; 
             display: flex; flex-direction: column; align-items: center; 
@@ -14,31 +14,45 @@
         }
         .header { background: rgba(255,255,255,0.07); padding: 10px 30px; border-radius: 15px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         .balance { font-size: 28px; font-weight: bold; color: var(--acc); }
-        .wheel-container { position: relative; width: 330px; height: 330px; margin-bottom: 20px; }
+        
+        .wheel-container { position: relative; width: 320px; height: 320px; margin-bottom: 20px; }
         #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
         .arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%) rotate(180deg); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--acc); z-index: 10; filter: drop-shadow(0 0 10px var(--acc)); }
+
         .spin-btn { background: linear-gradient(45deg, var(--sec), var(--acc)); color: white; border: none; width: 90%; padding: 18px; font-size: 20px; border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0,210,255,0.3); margin-bottom: 20px; }
+        .spin-btn:disabled { opacity: 0.5; }
+
         .shop { display: flex; gap: 10px; width: 100%; justify-content: center; }
-        .item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; flex: 1; cursor: pointer; transition: 0.2s; }
-        .item:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+        .item { 
+            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); 
+            padding: 12px; border-radius: 12px; text-align: center; flex: 1; 
+            cursor: pointer; transition: 0.3s; 
+        }
+        /* Класс для выбранной кнопки */
+        .item.active { border-color: var(--acc); background: rgba(0, 210, 255, 0.1); box-shadow: 0 0 10px rgba(0, 210, 255, 0.2); }
+
         #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
     <div class="header">
         <div style="font-size: 10px; opacity: 0.6;">ВАШ БАЛАНС</div>
-        <div class="balance">2,500 💎</div>
+        <div class="balance" id="userBalance">2,500 💎</div>
     </div>
+
     <div class="wheel-container">
         <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
-    <button class="spin-btn" id="btn" onclick="start()">КРУТИТЬ 🔥</button>
+
+    <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
+
     <div class="shop">
-        <div class="item" onclick="start()">⭐ 50<br><small>1 СПИН</small></div>
-        <div class="item" style="border-color: var(--acc);" onclick="tg.showAlert('Нужно больше звезд! ⭐')">⭐ 120<br><small>3 СПИНА</small></div>
-        <div class="item" onclick="tg.showAlert('Нужно больше звезд! ⭐')">⭐ 200<br><small>5 СПИНОВ</small></div>
+        <div class="item active" onclick="selectItem(this, 50, 1)">⭐ 50<br><small>1 СПИН</small></div>
+        <div class="item" onclick="selectItem(this, 120, 3)">⭐ 120<br><small>3 СПИНА</small></div>
+        <div class="item" onclick="selectItem(this, 200, 5)">⭐ 200<br><small>5 СПИНОВ</small></div>
     </div>
+
     <div id="modal">
         <h2 style="color:var(--acc); font-size: 32px;">ПОЗДРАВЛЯЕМ!</h2>
         <div id="prize" style="font-size: 80px; margin: 20px;"></div>
@@ -50,8 +64,11 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const sectors = ["🍎", "💰", "⭐", "🎲", "🚀", "💎", "⚡", "🔥", "🌈", "🏆", "🎯", "🎰"];
+        
         let currentRotation = 0;
         let isSpinning = false;
+        let selectedPrice = 50; // По умолчанию выбрано 50
+        let userBalance = 2500; // Временный баланс
 
         function draw() {
             const arc = (2 * Math.PI) / sectors.length;
@@ -65,29 +82,45 @@
             }
         }
 
-        function start() {
-            if(isSpinning) return;
+        function selectItem(el, price, count) {
+            // Убираем активный класс у всех и даем текущему
+            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            selectedPrice = price;
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function trySpin() {
+            if (isSpinning) return;
+            
+            // ПРОВЕРКА: Если выбрано больше 50, имитируем нехватку (для теста)
+            if (selectedPrice > 50) {
+                tg.showAlert("Недостаточно баланса! Нужно пополнить ⭐");
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+            startSpin();
+        }
+
+        function startSpin() {
             isSpinning = true;
-            const btn = document.getElementById('btn');
-            btn.disabled = true;
+            document.getElementById('mainBtn').disabled = true;
             
             const spinAdd = Math.floor(3600 + Math.random() * 3600);
             currentRotation += spinAdd;
             canvas.style.transform = `rotate(${currentRotation}deg)`;
             
-            // Начальная вибрация
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
-            // МИКРО-ВИБРАЦИЯ ПРИ ВРАЩЕНИИ
-            let interval = setInterval(() => {
+            let vibrationInterval = setInterval(() => {
                 if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            }, 150); // Легкий "тик" каждые 150мс
+            }, 150);
 
             setTimeout(() => {
-                clearInterval(interval); // Останавливаем тиканье
+                clearInterval(vibrationInterval);
                 const actual = currentRotation % 360;
-                const sectorAngle = 360 / sectors.length;
-                const idx = Math.floor(((actual + 90) % 360) / sectorAngle);
+                const idx = Math.floor(((actual + 90) % 360) / (360 / sectors.length));
                 const win = sectors[sectors.length - 1 - idx];
                 
                 document.getElementById('prize').innerText = win;
