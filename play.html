@@ -1,109 +1,99 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal Roulette Premium</title>
+    <title>Royal Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --wine: #2c0a0a; --gold: #d4af37; --soft-gold: #fcf1d1; --dark: #050505; }
+        
         body { 
             background: radial-gradient(circle at top, var(--wine) 0%, var(--dark) 100%);
-            font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; 
-            align-items: center; margin: 0; padding: 15px; color: var(--soft-gold); height: 100vh; overflow: hidden;
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            display: flex; flex-direction: column; 
+            align-items: center; margin: 0; padding: 10px 20px; 
+            color: var(--soft-gold); height: 100vh; overflow: hidden;
         }
-        .header { background: rgba(212, 175, 55, 0.07); padding: 10px 40px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px; }
-        .balance { font-size: 32px; font-weight: 800; color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.5); }
-        .info-btn { position: absolute; right: 20px; top: 25px; width: 45px; height: 45px; background: rgba(212, 175, 55, 0.1); border: 1.5px solid var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; z-index: 100; }
-        .wheel-container { position: relative; width: 330px; height: 330px; margin: 20px 0; display: flex; align-items: center; justify-content: center; }
-        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 5px solid var(--gold); box-shadow: 0 0 20px var(--gold); }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 30px solid #fff; z-index: 110; }
-        .wheel-outer { width: 290px; height: 290px; border-radius: 50%; overflow: hidden; z-index: 2; border: 3px solid #000; }
-        #canvas { width: 100%; height: 100%; transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
-        .spin-controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        .spin-opt { border: 1px solid var(--gold); padding: 8px 15px; border-radius: 10px; color: var(--gold); font-size: 14px; font-weight: bold; opacity: 0.6; }
-        .spin-opt.active { opacity: 1; background: rgba(212, 175, 55, 0.2); }
-        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: none; width: 90%; padding: 20px; font-size: 22px; border-radius: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.6); }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
-        .card { background: #fff; width: 85%; border-radius: 25px; padding: 20px; color: #333; }
-        .prize-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="balance">1,000 ⭐</div>
-    </div>
-    <div class="info-btn" onclick="openPrizes()">🎁</div>
-    <div class="wheel-container">
-        <div class="lights-ring"></div>
-        <div class="pointer"></div>
-        <div class="wheel-outer"><canvas id="canvas" width="600" height="600"></canvas></div>
-    </div>
-    <div class="spin-controls">
-        <div class="spin-opt active">1 SPIN</div>
-        <div class="spin-opt">5 SPINS</div>
-        <div class="spin-opt">10 SPINS</div>
-    </div>
-    <button class="spin-btn" id="mainBtn" onclick="trySpin()">ИГРАТЬ 🔞</button>
 
-    <div id="winModal" class="modal">
-        <h1 style="color:var(--gold)">ВЫИГРЫШ!</h1>
-        <div id="winEmoji" style="font-size:120px; margin: 20px 0;"></div>
-        <button class="spin-btn" style="width:240px" onclick="collect()">ЗАБРАТЬ ПРИЗ</button>
-    </div>
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 4px 25px rgba(212, 175, 55, 0.2); }
+        }
 
-    <div id="prizesModal" class="modal" onclick="this.style.display='none'">
-        <div class="card" onclick="event.stopPropagation()">
-            <h3 style="text-align:center; color:#800000;">СПИСОК ПРИЗОВ</h3>
-            <div id="list"></div>
-            <button class="spin-btn" style="width:100%; margin-top:15px; padding:10px;" onclick="document.getElementById('prizesModal').style.display='none'">ЗАКРЫТЬ</button>
-        </div>
-    </div>
+        @keyframes gift-wiggle {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-10deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(1.1); }
+        }
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        const sectors = ["🖼️", "🎥", "🏆", "🎰", "💄", "🍑", "🔥", "🍆", "🔑", "☎️", "❤️"];
-        const names = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
+        .header { 
+            background: rgba(212, 175, 55, 0.07); 
+            padding: 10px 30px; border-radius: 20px; 
+            margin-top: 15px; margin-bottom: 20px; 
+            text-align: center; border: 1px solid rgba(212, 175, 55, 0.3);
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        .balance { font-size: 30px; font-weight: 800; color: var(--gold); }
         
-        let urlParams = new URLSearchParams(window.location.search);
-        let winner = urlParams.get('prizes') || "🖼️";
-
-        function draw() {
-            const ctx = document.getElementById('canvas').getContext('2d');
-            const arc = (Math.PI * 2) / sectors.length;
-            for(let i=0; i<sectors.length; i++) {
-                ctx.fillStyle = i%2==0 ? "#3d0a0a" : "#1a1a1a";
-                ctx.beginPath(); ctx.moveTo(300,300); ctx.arc(300,300,300, i*arc, (i+1)*arc); ctx.fill();
-                ctx.save(); ctx.translate(300,300); ctx.rotate(i*arc + arc/2);
-                ctx.fillStyle = "#fff"; ctx.font = "bold 42px Arial"; ctx.fillText(sectors[i], 200, 15); ctx.restore();
-            }
+        .info-btn {
+            position: absolute; right: 20px; top: 25px; width: 42px; height: 42px;
+            background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; cursor: pointer; z-index: 100;
+            animation: gift-wiggle 2s infinite ease-in-out;
         }
 
-        function trySpin() {
-            const idx = sectors.indexOf(winner);
-            const deg = 3600 + (360 - (idx * (360/sectors.length))) - (180/sectors.length);
-            document.getElementById('canvas').style.transform = `rotate(${deg}deg)`;
-            document.getElementById('mainBtn').disabled = true;
-            setTimeout(() => {
-                document.getElementById('winEmoji').innerText = winner;
-                document.getElementById('winModal').style.display = 'flex';
-                confetti();
-            }, 5500);
+        .wheel-container {
+            position: relative; width: 330px; height: 330px; margin-bottom: 25px;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        function collect() {
-            tg.sendData("claim|" + winner);
-            tg.close();
+        .lights-ring {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; background: #111; border: 4px solid var(--gold);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); z-index: 1;
         }
 
-        function openPrizes() {
-            document.getElementById('list').innerHTML = sectors.map(s => `<div class="prize-row"><span>${s}</span> <span>${names[s]}</span></div>`).join('');
-            document.getElementById('prizesModal').style.display = 'flex';
+        .led {
+            position: absolute; width: 7px; height: 7px; background: #fff;
+            border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%);
+            z-index: 5;
         }
 
-        draw();
-        tg.expand();
-    </script>
-</body>
-</html>
+        .pointer {
+            position: absolute; top: -12px; left: 50%; 
+            transform: translateX(-50%); width: 0; height: 0; 
+            border-left: 16px solid transparent; border-right: 16px solid transparent; 
+            border-top: 28px solid #ffffff; z-index: 110;
+            filter: drop-shadow(0 0 8px var(--gold));
+        }
+
+        .wheel-outer {
+            position: relative; width: 285px; height: 285px;
+            border-radius: 50%; z-index: 2;
+            box-shadow: inset 0 0 20px #000; border: 2px solid #000;
+            display: flex; align-items: center; justify-content: center;
+            background: #1a1a1a;
+        }
+        
+        #canvas { width: 100%; height: 100%; border-radius: 50%; transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1); }
+
+        .spin-btn { 
+            background: linear-gradient(135deg, #800000 0%, #d4af37 100%);
+            color: white; border: none; width: 90%; padding: 18px; font-size: 22px; 
+            border-radius: 16px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6); text-transform: uppercase;
+        }
+
+        .shop { display: flex; gap: 10px; width: 95%; margin-top: 15px; }
+        .item { 
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.3s;
+        }
+        .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); }
+
+        .modal-overlay { 
+            display: none; position: fixed; top:0; left:0
