@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -19,104 +19,6 @@
         
         .wheel-container { position: relative; width: 330px; height: 330px; margin: 20px 0; display: flex; align-items: center; justify-content: center; }
         .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 15px var(--gold); }
-        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #ffffff; z-index: 110; }
         .wheel-outer { position: relative; width: 290px; height: 290px; border-radius: 50%; z-index: 2; border: 2px solid #000; overflow: hidden; }
-        #canvas { width: 100%; height: 100%; transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
-        
-        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 20px; border-radius: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.94); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
-        .card { background: white; width: 85%; border-radius: 25px; padding: 20px; color: #333; max-height: 80vh; overflow-y: auto; }
-        .prize-item { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .prize-item span:first-child { font-size: 24px; min-width: 30px; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div style="font-size: 11px; opacity: 0.7; text-align: center;">БАЛАНС</div>
-        <div class="balance">1000 ⭐</div>
-    </div>
-    <div class="info-btn" onclick="toggleModal('prizesModal', true)">🎁</div>
-
-    <div class="wheel-container">
-        <div class="lights-ring"></div>
-        <div class="pointer"></div>
-        <div class="wheel-outer"><canvas id="canvas" width="600" height="600"></canvas></div>
-    </div>
-
-    <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
-
-    <div id="prizesModal" class="modal">
-        <div class="card">
-            <h3 style="text-align:center; margin-top:0; color: #800000;">СПИСОК ПРИЗОВ</h3>
-            <div class="prize-item"><span>🖼️</span> <span>Фото</span></div>
-            <div class="prize-item"><span>🎥</span> <span>Видео</span></div>
-            <div class="prize-item"><span>🏆</span> <span>Пак 8+2</span></div>
-            <div class="prize-item"><span>🎰</span> <span>Пак 10+4</span></div>
-            <div class="prize-item"><span>💄</span> <span>Секс</span></div>
-            <div class="prize-item"><span>🍑</span> <span>Анал</span></div>
-            <div class="prize-item"><span>🔥</span> <span>Минет</span></div>
-            <div class="prize-item"><span>🔑</span> <span>Приватка</span></div>
-            <div class="prize-item"><span>☎️</span> <span>Звонок</span></div>
-            <div class="prize-item"><span>❤️</span> <span>Вирт</span></div>
-            <button class="spin-btn" style="width:100%; margin-top:10px;" onclick="toggleModal('prizesModal', false)">ЗАКРЫТЬ</button>
-        </div>
-    </div>
-
-    <div id="winModal" class="modal">
-        <h2 style="color:var(--gold)">ВЫИГРЫШ!</h2>
-        <div id="winEmoji" style="font-size:100px; margin:20px;"></div>
-        <button class="spin-btn" style="width:250px" onclick="collectAndClose()">ЗАБРАТЬ ПРИЗ 🎁</button>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        const params = new URLSearchParams(window.location.search);
-        let lastWinEmoji = "";
-
-        const prizeMapping = {
-            "🖼️": "photo", "🎥": "video", "🏆": "pack82", "🎰": "pack104",
-            "💄": "sex", "🍑": "anal", "🔥": "oral", "🔑": "private", "☎️": "call", "❤️": "virt"
-        };
-        const sectors = ["🖼️", "🎥", "🏆", "🎰", "💄", "🍑", "🔥", "🔑", "☎️", "❤️"];
-
-        function drawWheel() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const arc = (Math.PI * 2) / sectors.length;
-            sectors.forEach((s, i) => {
-                ctx.fillStyle = i % 2 === 0 ? "#4a0e0e" : "#1a1a1a";
-                ctx.beginPath(); ctx.moveTo(300,300); ctx.arc(300,300,300, i*arc, (i+1)*arc); ctx.fill();
-                ctx.save(); ctx.translate(300,300); ctx.rotate(i*arc + arc/2);
-                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 50px Arial"; ctx.fillText(s, 190, 20); ctx.restore();
-            });
-        }
-
-        async function trySpin() {
-            const prizeQueue = params.get('prizes') ? params.get('prizes').split(',') : ["🖼️"];
-            lastWinEmoji = prizeQueue[0];
-            const idx = sectors.indexOf(lastWinEmoji);
-            const arc = 360 / sectors.length;
-            const target = 3600 + (360 - (idx * arc)) - (arc / 2);
-            document.getElementById('canvas').style.transform = `rotate(${target}deg)`;
-            
-            setTimeout(() => {
-                document.getElementById('winEmoji').innerText = lastWinEmoji;
-                toggleModal('winModal', true);
-                confetti({ particleCount: 150, spread: 70 });
-            }, 5200);
-        }
-
-        function collectAndClose() {
-            const prizeKey = prizeMapping[lastWinEmoji] || "photo";
-            tg.sendData("win|" + prizeKey);
-            setTimeout(() => tg.close(), 100);
-        }
-
-        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-        drawWheel();
-        tg.expand();
-        tg.ready();
-    </script>
-</body>
-</html>
+        #canvas { width: 100%; height: 100%; transition: transform 5
