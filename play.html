@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -8,127 +8,52 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --wine: #2c0a0a; --gold: #d4af37; --soft-gold: #fcf1d1; --dark: #050505; }
-        
         body { 
             background: radial-gradient(circle at top, var(--wine) 0%, var(--dark) 100%);
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            display: flex; flex-direction: column; 
-            align-items: center; margin: 0; padding: 10px 20px; 
-            color: var(--soft-gold); height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 10px 20px; color: var(--soft-gold); 
+            height: 100vh; overflow: hidden;
         }
-
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 4px 25px rgba(212, 175, 55, 0.2); }
-        }
-
-        @keyframes gift-wiggle {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(-10deg) scale(1.1); }
-            75% { transform: rotate(10deg) scale(1.1); }
-        }
-
         .header { 
-            background: rgba(212, 175, 55, 0.07); 
-            padding: 10px 30px; border-radius: 20px; 
-            margin-top: 15px; margin-bottom: 20px; 
-            text-align: center; border: 1px solid rgba(212, 175, 55, 0.3);
+            background: rgba(212, 175, 55, 0.07); padding: 10px 30px; border-radius: 20px; 
+            margin-top: 15px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(212, 175, 55, 0.3);
             animation: breathe 3s infinite ease-in-out;
-            transition: all 0.3s ease;
         }
-
-        .header.deduct {
-            border-color: #ff4444;
-            background: rgba(255, 68, 68, 0.15);
-            transform: scale(0.9) !important;
-        }
-
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         .balance { font-size: 30px; font-weight: 800; color: var(--gold); }
-        
         .info-btn {
             position: absolute; right: 20px; top: 25px; width: 42px; height: 42px;
             background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
             border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer; z-index: 100;
-            animation: gift-wiggle 2s infinite ease-in-out;
+            font-size: 22px; z-index: 100;
         }
-
-        .wheel-container {
-            position: relative; width: 330px; height: 330px; margin-bottom: 25px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .lights-ring {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 50%; background: #111; border: 4px solid var(--gold);
-            box-shadow: 0 0 30px rgba(0,0,0,0.8); z-index: 1;
-        }
-
-        .led {
-            position: absolute; width: 7px; height: 7px; background: #fff;
-            border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%);
-            z-index: 5;
-        }
-
-        .pointer {
-            position: absolute; top: -12px; left: 50%; 
-            transform: translateX(-50%); width: 0; height: 0; 
-            border-left: 16px solid transparent; border-right: 16px solid transparent; 
-            border-top: 28px solid #ffffff; z-index: 110;
-            filter: drop-shadow(0 0 8px var(--gold));
-        }
-
-        .wheel-outer {
-            position: relative; width: 285px; height: 285px;
-            border-radius: 50%; z-index: 2;
-            box-shadow: inset 0 0 20px #000; border: 2px solid #000;
-            display: flex; align-items: center; justify-content: center;
-            background: #1a1a1a;
-        }
-        
+        .wheel-container { position: relative; width: 330px; height: 330px; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; }
+        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 30px rgba(0,0,0,0.8); z-index: 1; }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 8px var(--gold)); }
+        .wheel-outer { position: relative; width: 285px; height: 285px; border-radius: 50%; z-index: 2; border: 2px solid #000; background: #1a1a1a; display: flex; align-items: center; justify-content: center; }
         #canvas { width: 100%; height: 100%; border-radius: 50%; transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1); }
-
-        .spin-btn { 
-            background: linear-gradient(135deg, #800000 0%, #d4af37 100%);
-            color: white; border: none; width: 90%; padding: 18px; font-size: 22px; 
-            border-radius: 16px; font-weight: 900; cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6); text-transform: uppercase;
-        }
-
+        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 22px; border-radius: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.6); text-transform: uppercase; }
         .shop { display: flex; gap: 10px; width: 95%; margin-top: 15px; }
-        .item { 
-            background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); 
-            padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.3s;
-        }
+        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.3s; }
         .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); }
-
-        .modal-overlay { 
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.92); z-index:1000; flex-direction:column; 
-            align-items:center; justify-content:center; backdrop-filter: blur(10px);
-        }
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.92); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
         .card { background: white; width: 85%; border-radius: 25px; padding: 25px; color: #333; }
         .prize-row { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #eee; font-weight: 600; }
     </style>
 </head>
 <body>
-    <div class="header" id="headerBox">
+    <div class="header">
         <div style="font-size: 11px; opacity: 0.7; letter-spacing: 1px;">ВАШ БАЛАНС</div>
         <div class="balance" id="balanceText">0 ⭐</div>
     </div>
-
     <div class="info-btn" onclick="toggleModal('prizesModal', true)">🎁</div>
-
     <div class="wheel-container">
-        <div class="lights-ring" id="lightsRing"></div>
+        <div class="lights-ring"></div>
         <div class="pointer"></div>
-        <div class="wheel-outer">
-            <canvas id="canvas" width="500" height="500"></canvas>
-        </div>
+        <div class="wheel-outer"><canvas id="canvas" width="500" height="500"></canvas></div>
     </div>
-
     <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
-
     <div class="shop">
         <div class="item active" id="p50" onclick="setPrice(50)">⭐ 50</div>
         <div class="item" id="p120" onclick="setPrice(120)">⭐ 120</div>
@@ -151,84 +76,28 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.setHeaderColor('#2c0a0a');
-        tg.setBackgroundColor('#050505');
-
         const params = new URLSearchParams(window.location.search);
         let balance = parseInt(params.get('balance')) || 0;
         let currentPrice = 50;
         
-        // НОВЫЕ ПРИЗЫ И ИКОНКИ
         const prizeNames = { 
-            "🖼️":"Фото (Single)",
-            "🎥":"Видео (Full)",
-            "🏆":"Пак 8+2",
-            "🎰":"Пак 10+4",
-            "💄":"Секс",
-            "🍑":"Анал",
-            "🔥":"Минет",
-            "🍆":"Игрушка",
-            "🔑":"Приватка",
-            "☎️":"Звонок",
-            "❤️":"Вирт",
-            "🌟":"Желание"
+            "🖼️":"Фото", "🎥":"Видео", "🏆":"Пак 8+2", "🎰":"Пак 10+4", 
+            "💄":"Секс", "🍑":"Анал", "🔥":"Минет", "🍆":"Игрушка", 
+            "🔑":"Приватка", "☎️":"Звонок", "❤️":"Вирт"
         };
         const sectors = Object.keys(prizeNames);
         
-        const balanceDisplay = document.getElementById('balanceText');
-        const headerBox = document.getElementById('headerBox');
-        balanceDisplay.innerText = balance + " ⭐";
-
-        function animateBalance(target) {
-            const start = balance + currentPrice;
-            const duration = 1000;
-            const startTime = performance.now();
-            headerBox.classList.add('deduct');
-
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const currentNum = Math.floor(start - (progress * currentPrice));
-                balanceDisplay.innerText = currentNum + " ⭐";
-
-                if (progress < 1) requestAnimationFrame(update);
-                else {
-                    balanceDisplay.innerText = target + " ⭐";
-                    headerBox.classList.remove('deduct');
-                }
-            }
-            requestAnimationFrame(update);
-        }
-
-        // Лампочки
-        const ring = document.getElementById('lightsRing');
-        for (let i = 0; i < 24; i++) {
-            const led = document.createElement('div');
-            led.className = 'led';
-            led.style.transformOrigin = `50% 165px`;
-            led.style.transform = `translateX(-50%) rotate(${i * 15}deg)`;
-            ring.appendChild(led);
-        }
-
-        setInterval(() => {
-            document.querySelectorAll('.led').forEach((l, i) => {
-                const step = Math.floor(Date.now()/200);
-                l.style.opacity = (step + i) % 3 === 0 ? "1" : "0.3";
-                l.style.boxShadow = (step + i) % 3 === 0 ? "0 0 10px #fff, 0 0 15px var(--gold)" : "none";
-            });
-        }, 100);
+        document.getElementById('balanceText').innerText = balance + " ⭐";
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        
         function drawWheel() {
             const arc = (Math.PI * 2) / sectors.length;
-            ctx.clearRect(0, 0, 500, 500);
             sectors.forEach((s, i) => {
                 ctx.fillStyle = i % 2 === 0 ? "#4a0e0e" : "#1a1a1a";
                 ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
                 ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
-                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 42px Arial"; ctx.textAlign = "right";
+                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 44px Arial"; ctx.textAlign = "right";
                 ctx.fillText(s, 225, 15); ctx.restore();
             });
         }
@@ -237,12 +106,9 @@
             currentPrice = p;
             document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
             document.getElementById('p'+p).classList.add('active');
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        function toggleModal(id, show) {
-            document.getElementById(id).style.display = show ? 'flex' : 'none';
-        }
+        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
         const listDiv = document.getElementById('prizesList');
         sectors.forEach(s => {
@@ -253,48 +119,47 @@
         let isSpinning = false;
 
         function trySpin() {
-            if (isSpinning) return;
-            if (balance < currentPrice) {
-                tg.showAlert("Недостаточно Royal Stars! ⭐");
-                return;
-            }
-            startSpin();
-        }
-
-        function startSpin() {
+            if (isSpinning || balance < currentPrice) return balance < currentPrice && tg.showAlert("Мало звезд! ⭐");
             isSpinning = true;
             document.getElementById('mainBtn').disabled = true;
             balance -= currentPrice;
-            animateBalance(balance);
+            document.getElementById('balanceText').innerText = balance + " ⭐";
+
+            // --- НАСТРОЙКА ШАНСОВ ---
+            // Веса для: Фото, Видео, Пак8+2, Пак10+4, Секс, Анал, Минет, Игрушка, Приватка, Звонок, Вирт
+            const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0]; 
             
-            const extra = 3600 + Math.random() * 3600;
-            rotation += extra;
+            let random = Math.random() * 100;
+            let targetSector = 0;
+            let sum = 0;
+            for (let i = 0; i < weights.length; i++) {
+                sum += weights[i];
+                if (random <= sum) { targetSector = i; break; }
+            }
+
+            const sectorAngle = 360 / sectors.length;
+            const stopAngle = 360 - (targetSector * sectorAngle) - (sectorAngle / 2);
+            rotation += 3600 + stopAngle - (rotation % 360); 
+            
             canvas.style.transform = `rotate(${rotation}deg)`;
-            
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
 
             setTimeout(() => {
-                const actualDeg = rotation % 360;
-                const idx = Math.floor(((360 - (actualDeg % 360)) % 360) / (360 / sectors.length));
-                document.getElementById('winEmoji').innerText = sectors[idx];
+                document.getElementById('winEmoji').innerText = sectors[targetSector];
                 toggleModal('winModal', true);
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 isSpinning = false;
                 document.getElementById('mainBtn').disabled = false;
             }, 4500);
         }
 
         function collect() {
-            tg.sendData(currentPrice + "|" + document.getElementById('winEmoji').innerText);
+            const prize = document.getElementById('winEmoji').innerText;
+            tg.sendData(currentPrice + "|" + prize);
+            tg.openTelegramLink("https://t.me/danilpervoi7878"); // СРАЗУ В ЛС К ТЕБЕ
             tg.close();
         }
 
-        window.onload = () => {
-            drawWheel();
-            tg.expand();
-            tg.ready();
-        };
+        window.onload = () => { drawWheel(); tg.expand(); };
     </script>
 </body>
 </html>
