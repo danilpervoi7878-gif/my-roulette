@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -15,8 +15,19 @@
             margin: 0; padding: 10px 20px; color: var(--soft-gold); 
             height: 100vh; overflow: hidden;
         }
-        .header { background: rgba(212, 175, 55, 0.07); padding: 10px 30px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 15px; }
-        .balance { font-size: 32px; font-weight: 800; color: var(--gold); transition: 0.1s; }
+
+        /* МЕРЦАНИЕ БАЛАНСА */
+        @keyframes balance-glow {
+            0%, 100% { text-shadow: 0 0 5px var(--gold); transform: scale(1); }
+            50% { text-shadow: 0 0 20px var(--gold), 0 0 30px #fff; transform: scale(1.02); }
+        }
+
+        .header { 
+            background: rgba(212, 175, 55, 0.07); padding: 10px 30px; border-radius: 20px; 
+            border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 15px;
+            animation: balance-glow 3s infinite ease-in-out;
+        }
+        .balance { font-size: 32px; font-weight: 800; color: var(--gold); }
         
         @keyframes gift-wiggle {
             0%, 100% { transform: rotate(0deg) scale(1); }
@@ -40,8 +51,8 @@
 
         .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 22px; border-radius: 16px; font-weight: 900; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
         .shop { display: flex; gap: 10px; width: 95%; margin-top: 15px; }
-        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.2s; }
-        .item.active { border: 2.5px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); }
+        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.2s; color: var(--gold); font-weight: bold; }
+        .item.active { border: 2.5px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); color: #fff; }
 
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
         .card { background: white; width: 85%; border-radius: 25px; padding: 25px; color: #333; }
@@ -66,9 +77,9 @@
     </div>
 
     <div id="winModal" class="modal">
-        <h1 style="color:var(--gold)">ROYAL WIN!</h1>
+        <h1 style="color:var(--gold); text-align: center;">ТВОЙ ВЫИГРЫШ!</h1>
         <div id="winEmoji" style="font-size:120px; margin:20px"></div>
-        <button class="spin-btn" style="width:220px" onclick="collect()">ЗАБРАТЬ ПРИЗ</button>
+        <button class="spin-btn" style="width:240px" onclick="collect()">ЗАБРАТЬ ПРИЗ 🎁</button>
     </div>
 
     <div id="prizesModal" class="modal" onclick="this.style.display='none'">
@@ -90,7 +101,6 @@
 
         document.getElementById('balText').innerText = balance + " ⭐";
 
-        // КАЗИНО-АНИМАЦИЯ БАЛАНСА
         function animateBalance(target) {
             const start = balance + price;
             const duration = 800;
@@ -106,7 +116,6 @@
             requestAnimationFrame(update);
         }
 
-        // РИСОВАНИЕ
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         function draw() {
@@ -121,7 +130,6 @@
             ctx.restore();
         }
 
-        // ЛАМПОЧКИ
         const ring = document.getElementById('ring');
         for(let i=0; i<24; i++) {
             const led = document.createElement('div');
@@ -151,7 +159,11 @@
             animateBalance(balance);
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
 
-            // ШАНСЫ (Твои настройки)
+            // ВИБРАЦИЯ ПРИ ВРАЩЕНИИ (ТРЕСК)
+            const hapticInterval = setInterval(() => {
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }, 100);
+
             const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0];
             let rand = Math.random() * 100, sum = 0, target = 0;
             for(let i=0; i<weights.length; i++) { sum += weights[i]; if(rand <= sum) { target = i; break; } }
@@ -162,6 +174,7 @@
             canvas.style.transform = `rotate(${rotation}deg)`;
 
             setTimeout(() => {
+                clearInterval(hapticInterval); // Останавливаем вибрацию
                 document.getElementById('winEmoji').innerText = sectors[target];
                 document.getElementById('winModal').style.display = 'flex';
                 confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
