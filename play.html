@@ -5,91 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Royal Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --wine: #4a0e0e; --gold: #d4af37; --dark: #0a0a0a; --soft-gold: #fcf1d1; }
+        :root { --wine: #4a0e0e; --gold: #d4af37; --soft-gold: #fcf1d1; }
         body { 
             background: radial-gradient(circle at top, #2c0a0a 0%, #050505 100%);
-            font-family: 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; 
+            font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; 
             align-items: center; margin: 0; padding: 20px; color: var(--soft-gold); height: 100vh; overflow: hidden;
         }
+        
+        /* Анимация пульсации баланса */
         .header { 
             background: rgba(255, 255, 255, 0.03); padding: 10px 35px; border-radius: 20px; 
             margin-bottom: 20px; text-align: center; border: 1.5px solid var(--gold);
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+            animation: breathe 3s infinite ease-in-out;
         }
-        .balance { font-size: 32px; font-weight: 800; color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
+            50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
+        }
+
+        .balance { font-size: 32px; font-weight: 800; color: var(--gold); transition: 0.5s; }
+        
         .wheel-outer {
-            position: relative; width: 330px; height: 330px; margin-bottom: 25px;
+            position: relative; width: 320px; height: 320px; margin-bottom: 25px;
             border-radius: 50%; padding: 10px; 
             background: linear-gradient(135deg, #d4af37 0%, #8a6d1d 50%, #d4af37 100%);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
         }
-        #canvas { width: 100%; height: 100%; border-radius: 50%; transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1); background: #1a1a1a; }
-        .arrow { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 35px solid var(--gold); z-index: 10; filter: drop-shadow(0 4px 5px rgba(0,0,0,0.6)); }
-        .spin-btn { background: linear-gradient(135deg, #800000 0%, #b30000 50%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 22px; border-radius: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 1px; }
-        .spin-btn:active { transform: scale(0.96); }
-        .spin-btn:disabled { opacity: 0.6; filter: grayscale(0.5); }
-        .shop { display: flex; gap: 12px; width: 100%; justify-content: center; margin-top: 10px; }
-        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 18px; text-align: center; flex: 1; transition: 0.3s; cursor: pointer; }
-        .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); }
-        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); z-index:100; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
+
+        #canvas { width: 100%; height: 100%; border-radius: 50%; transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1); }
+
+        .spin-btn { 
+            background: linear-gradient(135deg, #800000 0%, #d4af37 100%);
+            color: white; border: none; width: 90%; padding: 18px; font-size: 22px; 
+            border-radius: 15px; font-weight: 900; cursor: pointer; transition: 0.2s;
+        }
+        .spin-btn:active { transform: scale(0.95); filter: brightness(1.2); }
+
+        #modal { 
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(0,0,0,0.9); z-index:100; flex-direction:column; 
+            align-items:center; justify-content:center; backdrop-filter: blur(10px);
+        }
+        
+        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 18px; text-align: center; flex: 1; transition: 0.3s; }
+        .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); }
     </style>
 </head>
 <body>
     <div class="header">
-        <div style="font-size: 11px; opacity: 0.8; color: var(--soft-gold); margin-bottom: 4px;">ВАШ БАЛАНС</div>
-        <div class="balance">2,500 💎</div>
+        <div style="font-size: 11px; opacity: 0.8;">ВАШ БАЛАНС</div>
+        <div class="balance" id="balanceText">0 ⭐</div>
     </div>
+
     <div class="wheel-outer">
-        <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
+
     <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
-    <div class="shop">
-        <div class="item active" onclick="selectItem(this, 50)">⭐ 50<br><small>1 СПИН</small></div>
-        <div class="item" onclick="selectItem(this, 120)">⭐ 120<br><small>3 СПИНА</small></div>
-        <div class="item" onclick="selectItem(this, 200)">⭐ 200<br><small>5 СПИНОВ</small></div>
+
+    <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+        <div class="item active" onclick="selectItem(this, 50)">⭐ 50</div>
+        <div class="item" onclick="selectItem(this, 120)">⭐ 120</div>
+        <div class="item" onclick="selectItem(this, 200)">⭐ 200</div>
     </div>
+
     <div id="modal">
-        <h2 style="color: var(--gold); font-size: 36px; text-shadow: 0 0 20px var(--gold);">ПОЗДРАВЛЯЕМ!</h2>
-        <div id="prize" style="font-size: 100px; margin: 30px; filter: drop-shadow(0 0 20px var(--gold));"></div>
-        <button class="spin-btn" style="width: auto; padding: 15px 60px;" onclick="collect()">ЗАБРАТЬ 🎁</button>
+        <h2 style="color: var(--gold); font-size: 36px;">ВЫИГРЫШ!</h2>
+        <div id="prize" style="font-size: 100px; margin: 20px;"></div>
+        <button class="spin-btn" style="width:auto; padding: 15px 50px;" onclick="collect()">ЗАБРАТЬ 🎁</button>
     </div>
+
     <script>
         const tg = window.Telegram.WebApp;
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentBalance = parseInt(urlParams.get('balance')) || 0;
+        let selectedPrice = 50;
+        let winningPrize = "";
+
+        document.getElementById('balanceText').innerText = currentBalance + " ⭐";
+
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const sectors = ["💎", "💰", "🎟️", "🎁", "⭐", "🏆", "🔥", "🌈", "🎰", "🎯", "⚡", "🎲"];
         let currentRotation = 0;
         let isSpinning = false;
-        function draw() { const arc = (2 * Math.PI) / sectors.length; for (let i = 0; i < sectors.length; i++) { ctx.fillStyle = (i % 2 === 0) ? "#4a0e0e" : "#1a1a1a"; ctx.beginPath(); ctx.moveTo(250, 250); ctx.arc(250, 250, 245, i * arc, (i + 1) * arc); ctx.fill(); ctx.strokeStyle = "rgba(212, 175, 55, 0.3)"; ctx.lineWidth = 2; ctx.stroke(); ctx.save(); ctx.translate(250, 250); ctx.rotate(i * arc + arc / 2); ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 44px Arial"; ctx.textAlign = "right"; ctx.fillText(sectors[i], 220, 15); ctx.restore(); } }
-        function selectItem(el, price) { document.querySelectorAll('.item').forEach(i => i.classList.remove('active')); el.classList.add('active'); if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-        
-        function trySpin() { 
-            if (isSpinning) return; 
-            startSpin(); 
+
+        function draw() {
+            const arc = (2 * Math.PI) / sectors.length;
+            for (let i = 0; i < sectors.length; i++) {
+                ctx.fillStyle = (i % 2 === 0) ? "#4a0e0e" : "#1a1a1a";
+                ctx.beginPath(); ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 245, i * arc, (i + 1) * arc); ctx.fill();
+                ctx.strokeStyle = "rgba(212, 175, 55, 0.3)"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.save(); ctx.translate(250, 250); ctx.rotate(i * arc + arc / 2);
+                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 44px Arial"; ctx.textAlign = "right";
+                ctx.fillText(sectors[i], 220, 15); ctx.restore();
+            }
         }
 
-        function startSpin() { 
-            isSpinning = true; 
-            document.getElementById('mainBtn').disabled = true; 
-            const spinAdd = Math.floor(3600 + Math.random() * 3600); 
-            currentRotation += spinAdd; 
-            canvas.style.transform = `rotate(${currentRotation}deg)`; 
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); 
-            let viber = setInterval(() => { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }, 100); 
-            setTimeout(() => { 
-                clearInterval(viber); 
-                const actual = currentRotation % 360; 
-                const idx = Math.floor(((360 - (actual % 360)) % 360) / (360 / sectors.length)); 
-                document.getElementById('prize').innerText = sectors[idx]; 
-                document.getElementById('modal').style.display = 'flex'; 
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); 
-                isSpinning = false; 
-            }, 4500); 
+        function selectItem(el, price) {
+            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            selectedPrice = price;
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
-        function collect() { tg.sendData("spin_done"); tg.close(); }
-        window.onload = () => { draw(); tg.expand(); }; tg.ready();
+
+        function trySpin() {
+            if (isSpinning) return;
+            if (currentBalance < selectedPrice) {
+                tg.showAlert("Недостаточно баланса! ⭐");
+                return;
+            }
+            startSpin();
+        }
+
+        function startSpin() {
+            isSpinning = true;
+            document.getElementById('mainBtn').disabled = true;
+            
+            // Анимация списания баланса
+            currentBalance -= selectedPrice;
+            document.getElementById('balanceText').style.color = "#ff4444";
+            setTimeout(() => {
+                document.getElementById('balanceText').innerText = currentBalance + " ⭐";
+                document.getElementById('balanceText').style.color = "var(--gold)";
+            }, 500);
+
+            const spinAdd = Math.floor(3600 + Math.random() * 3600);
+            currentRotation += spinAdd;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            let viber = setInterval(() => { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }, 100);
+
+            setTimeout(() => {
+                clearInterval(viber);
+                const actual = currentRotation % 360;
+                const idx = Math.floor(((360 - (actual % 360)) % 360) / (360 / sectors.length));
+                winningPrize = sectors[idx];
+                
+                document.getElementById('prize').innerText = winningPrize;
+                document.getElementById('modal').style.display = 'flex';
+                
+                // ЗАПУСК ФЕЙЕРВЕРКА 🎆
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#ffffff', '#4a0e0e'] });
+                
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                isSpinning = false;
+            }, 4500);
+        }
+
+        function collect() {
+            // Отправляем цену и приз боту (например "50|💎")
+            tg.sendData(selectedPrice + "|" + winningPrize);
+            tg.close();
+        }
+
+        window.onload = () => { draw(); tg.expand(); };
+        tg.ready();
     </script>
 </body>
 </html>
