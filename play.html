@@ -17,12 +17,9 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* ИСПРАВЛЕННАЯ ШАПКА — ТЕПЕРЬ ПРОЗРАЧНАЯ */
         .header { 
-            background: rgba(212, 175, 55, 0.05); 
-            padding: 8px 35px; border-radius: 20px; 
-            border: 1px solid rgba(212, 175, 55, 0.3); 
-            margin-top: 10px;
+            background: rgba(212, 175, 55, 0.05); padding: 8px 35px; border-radius: 20px; 
+            border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px;
             animation: balance-glow 3s infinite ease-in-out;
         }
         @keyframes balance-glow {
@@ -54,19 +51,30 @@
         }
 
         .shop { display: flex; gap: 8px; width: 100%; margin-top: 15px; }
-        .item { 
-            background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.2); 
-            padding: 10px 5px; border-radius: 12px; text-align: center; flex: 1; transition: 0.2s; 
-        }
+        .item { background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.2); padding: 10px 5px; border-radius: 12px; text-align: center; flex: 1; transition: 0.2s; }
         .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); }
         .item-price { color: var(--gold); font-weight: bold; font-size: 16px; }
-        .item-desc { color: var(--soft-gold); font-size: 10px; opacity: 0.8; margin-top: 3px; letter-spacing: 0.5px; }
+        .item-desc { color: var(--soft-gold); font-size: 10px; opacity: 0.8; margin-top: 3px; }
 
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
+        /* ИСПРАВЛЕННОЕ ОКНО ВЫИГРЫША — ТЕПЕРЬ ЯРКОЕ */
+        .modal { 
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%); /* Праздничный фон */
+            z-index:1000; flex-direction:column; align-items:center; justify-content:center; 
+            backdrop-filter: blur(15px);
+            animation: modal-fade 0.5s ease-out;
+        }
+        @keyframes modal-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        #winEmoji { 
+            font-size: 130px; margin: 20px; 
+            filter: drop-shadow(0 0 30px var(--gold)); /* Свечение приза */
+            animation: prize-bounce 1s infinite alternate;
+        }
+        @keyframes prize-bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+
         .card { background: linear-gradient(135deg, #1a0505 0%, #050505 100%); width: 85%; border-radius: 25px; padding: 25px; color: var(--soft-gold); border: 2px solid var(--gold); }
         #list { max-height: 250px; overflow-y: auto; padding-right: 5px; }
-        #list::-webkit-scrollbar { width: 3px; }
-        #list::-webkit-scrollbar-thumb { background: var(--gold); }
         .prize-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.2); font-weight: bold; }
     </style>
 </head>
@@ -83,24 +91,15 @@
     <button class="spin-btn" id="mainBtn" onclick="spin()">ИГРАТЬ 🔥</button>
     
     <div class="shop">
-        <div class="item active" id="p50" onclick="setPrice(50)">
-            <div class="item-price">⭐ 50</div>
-            <div class="item-desc">1 спин</div>
-        </div>
-        <div class="item" id="p120" onclick="setPrice(120)">
-            <div class="item-price">⭐ 120</div>
-            <div class="item-desc">3 спина</div>
-        </div>
-        <div class="item" id="p200" onclick="setPrice(200)">
-            <div class="item-price">⭐ 200</div>
-            <div class="item-desc">5 спинов</div>
-        </div>
+        <div class="item active" id="p50" onclick="setPrice(50)"><div class="item-price">⭐ 50</div><div class="item-desc">1 спин</div></div>
+        <div class="item" id="p120" onclick="setPrice(120)"><div class="item-price">⭐ 120</div><div class="item-desc">3 спина</div></div>
+        <div class="item" id="p200" onclick="setPrice(200)"><div class="item-price">⭐ 200</div><div class="item-desc">5 спинов</div></div>
     </div>
 
     <div id="winModal" class="modal">
-        <h1 style="color:var(--gold); text-align: center; margin-top: 0;">ТВОЙ ВЫИГРЫШ!</h1>
-        <div id="winEmoji" style="font-size:110px; margin:15px"></div>
-        <button class="spin-btn" style="width:240px" onclick="collect()">ЗАБРАТЬ ПРИЗ 🎁</button>
+        <h1 style="color:var(--gold); text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 2px;">Твой выигрыш!</h1>
+        <div id="winEmoji"></div>
+        <button class="spin-btn" style="width:260px; box-shadow: 0 0 30px var(--gold);" onclick="collect()">ЗАБРАТЬ ПРИЗ 🎁</button>
     </div>
 
     <div id="prizesModal" class="modal" onclick="this.style.display='none'">
@@ -113,8 +112,6 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.setHeaderColor('#2c0a0a'); // Цвет системной полоски сверху (в тон фона)
-        
         const prizeNames = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
         const sectors = Object.keys(prizeNames);
         let params = new URLSearchParams(window.location.search);
@@ -157,7 +154,7 @@
         for(let i=0; i<24; i++) {
             const led = document.createElement('div');
             led.className = 'led';
-            led.style.transformOrigin = `50% 160px`; // Центровка фонариков
+            led.style.transformOrigin = `50% 160px`;
             led.style.transform = `translateX(-50%) rotate(${i*15}deg)`;
             ring.appendChild(led);
         }
@@ -199,7 +196,10 @@
                 clearInterval(hapticInterval);
                 document.getElementById('winEmoji').innerText = sectors[target];
                 document.getElementById('winModal').style.display = 'flex';
-                confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
+                
+                // МОЩНЫЙ САЛЮТ
+                confetti({ particleCount: 250, spread: 100, origin: { y: 0.6 } });
+                
                 if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }, 5000);
         }
@@ -207,7 +207,7 @@
         function collect() {
             tg.sendData(price + "|" + document.getElementById('winEmoji').innerText);
             setTimeout(() => {
-                tg.openTelegramLink("https://t.me/KittyCam78"); // Ник из твоего скрина
+                tg.openTelegramLink("https://t.me/KittyCam78"); 
                 tg.close();
             }, 150);
         }
