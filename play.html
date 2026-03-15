@@ -96,4 +96,143 @@
         .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); }
 
         .modal-overlay { 
-            display: none; position: fixed; top:0; left:0
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(0,0,0,0.92); z-index:1000; flex-direction:column; 
+            align-items:center; justify-content:center; backdrop-filter: blur(10px);
+        }
+        .card { background: white; width: 85%; border-radius: 25px; padding: 25px; color: #333; }
+        .prize-row { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #eee; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header" id="headerBox">
+        <div style="font-size: 11px; opacity: 0.7; letter-spacing: 1px;">ВАШ БАЛАНС</div>
+        <div class="balance" id="balanceText">0 ⭐</div>
+    </div>
+
+    <div class="info-btn" onclick="toggleModal('prizesModal', true)">🎁</div>
+
+    <div class="wheel-container">
+        <div class="lights-ring" id="lightsRing"></div>
+        <div class="pointer"></div>
+        <div class="wheel-outer">
+            <canvas id="canvas" width="500" height="500"></canvas>
+        </div>
+    </div>
+
+    <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
+
+    <div class="shop">
+        <div class="item active" id="p50" onclick="setPrice(50)">⭐ 50</div>
+        <div class="item" id="p120" onclick="setPrice(120)">⭐ 120</div>
+        <div class="item" id="p200" onclick="setPrice(200)">⭐ 200</div>
+    </div>
+
+    <div id="prizesModal" class="modal-overlay">
+        <div class="card">
+            <h3 style="text-align:center; color:#800000; margin-top:0;">СПИСОК ПРИЗОВ</h3>
+            <div id="prizesList" style="max-height:300px; overflow-y:auto;"></div>
+            <button class="spin-btn" style="width:100%; margin-top:15px;" onclick="toggleModal('prizesModal', false)">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal-overlay">
+        <h2 style="color: var(--gold); font-size: 32px; margin-bottom: 0;">ПОЗДРАВЛЯЕМ!</h2>
+        <div id="winEmoji" style="font-size: 100px; margin: 20px;"></div>
+        <button class="spin-btn" style="width:auto; padding: 15px 60px;" onclick="collect()">ЗАБРАТЬ 🎁</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const params = new URLSearchParams(window.location.search);
+        let balance = parseInt(params.get('balance')) || 0;
+        let currentPrice = 50;
+        
+        // ТВОИ НОВЫЕ СТИКЕРЫ И ОПИСАНИЯ
+        const prizeNames = { 
+            "📸":"Фото","🎬":"Видео","💦":"Сквирт","🎁":"Набор 5+2","💎":"Набор 8+4","👯":"С подружкой","🔥":"Приватка","🎰":"Джекпот","💰":"Звонок","🎯":"Вирт","⚡":"Сигна","🎲":"Твоё желание"
+        };
+        const sectors = Object.keys(prizeNames);
+        
+        const balanceDisplay = document.getElementById('balanceText');
+        balanceDisplay.innerText = balance + " ⭐";
+
+        // Рисуем лампочки
+        const ring = document.getElementById('lightsRing');
+        for (let i = 0; i < 24; i++) {
+            const led = document.createElement('div');
+            led.className = 'led';
+            led.style.transformOrigin = `50% 165px`;
+            led.style.transform = `translateX(-50%) rotate(${i * 15}deg)`;
+            ring.appendChild(led);
+        }
+
+        setInterval(() => {
+            document.querySelectorAll('.led').forEach((l, i) => {
+                const step = Math.floor(Date.now()/200);
+                l.style.opacity = (step + i) % 3 === 0 ? "1" : "0.3";
+            });
+        }, 100);
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function drawWheel() {
+            const arc = (Math.PI * 2) / sectors.length;
+            ctx.clearRect(0, 0, 500, 500);
+            sectors.forEach((s, i) => {
+                ctx.fillStyle = i % 2 === 0 ? "#4a0e0e" : "#1a1a1a";
+                ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
+                ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 42px Arial"; ctx.textAlign = "right";
+                ctx.fillText(s, 225, 15); ctx.restore();
+            });
+        }
+
+        function setPrice(p) {
+            currentPrice = p;
+            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+            document.getElementById('p'+p).classList.add('active');
+        }
+
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'flex' : 'none';
+        }
+
+        const listDiv = document.getElementById('prizesList');
+        sectors.forEach(s => {
+            listDiv.innerHTML += `<div class="prize-row"><span>${s}</span> <span style="color:#ff4d8d">${prizeNames[s]}</span></div>`;
+        });
+
+        let rotation = 0;
+        let isSpinning = false;
+
+        function trySpin() {
+            if (isSpinning || balance < currentPrice) return;
+            isSpinning = true;
+            balance -= currentPrice;
+            balanceDisplay.innerText = balance + " ⭐";
+            
+            const extra = 3600 + Math.random() * 3600;
+            rotation += extra;
+            canvas.style.transform = `rotate(${rotation}deg)`;
+            
+            setTimeout(() => {
+                const actualDeg = rotation % 360;
+                const idx = Math.floor(((360 - (actualDeg % 360)) % 360) / (360 / sectors.length));
+                document.getElementById('winEmoji').innerText = sectors[idx];
+                toggleModal('winModal', true);
+                confetti();
+                isSpinning = false;
+            }, 4500);
+        }
+
+        function collect() {
+            tg.sendData(currentPrice + "|" + document.getElementById('winEmoji').innerText);
+            tg.close();
+        }
+
+        window.onload = () => { drawWheel(); tg.expand(); };
+    </script>
+</body>
+</html>
