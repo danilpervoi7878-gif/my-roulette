@@ -3,70 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette</title>
+    <title>Elite Roulette</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background-color: #fce4ec; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .wheel-box { position: relative; width: 300px; height: 300px; }
-        #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        :root {
+            --bg-color: #1a1a2e; /* Глубокий синий/черный */
+            --accent-color: #00d2ff; /* Неоновый голубой */
+            --second-accent: #9d50bb; /* Фиолетовый */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body { 
+            background: radial-gradient(circle at top, #2e1a47 0%, #1a1a2e 100%);
+            font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 20px; color: white; min-height: 100vh;
+        }
+
+        /* Уникальный баланс в стиле "Стекло" */
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 12px 30px;
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 40px;
+        }
+        .balance-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; }
+        .balance-value { font-size: 28px; font-weight: 900; color: var(--accent-color); text-shadow: 0 0 10px var(--accent-color); }
+
+        /* Контейнер колеса с неоновым свечением */
+        .wheel-container { 
+            position: relative; width: 310px; height: 310px; 
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(157, 80, 187, 0.3);
+        }
+        #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.2, 0, 0.2, 1); }
+        
+        /* Уникальный указатель (снизу или сбоку) — сделаем его снизу! */
         .arrow { 
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%) rotate(180deg);
             width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent;
-            border-top: 30px solid #ff4081; z-index: 10;
+            border-top: 25px solid var(--accent-color); z-index: 10;
+            filter: drop-shadow(0 0 5px var(--accent-color));
         }
-        .btn { 
-            margin-top: 40px; background: #ff4081; color: white; border: none; 
-            padding: 15px 50px; font-size: 20px; border-radius: 25px; cursor: pointer; font-weight: bold;
+
+        /* Кнопка в стиле "Киберпанк" */
+        .main-btn { 
+            margin-top: 50px; 
+            background: linear-gradient(45deg, var(--second-accent), var(--accent-color));
+            color: white; border: none; width: 85%; padding: 18px; 
+            font-size: 18px; border-radius: 15px; cursor: pointer; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 3px;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4); transition: 0.3s;
         }
+        .main-btn:active { transform: scale(0.96); opacity: 0.8; }
+
+        /* Магазин спинов как карточки */
+        .shop-container { display: flex; gap: 15px; margin-top: auto; padding-bottom: 20px; width: 100%; }
+        .shop-item { 
+            background: var(--glass-bg); border: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 10px; border-radius: 18px; text-align: center; flex: 1;
+            transition: 0.3s;
+        }
+        .shop-item.popular { border: 1px solid var(--accent-color); background: rgba(0, 210, 255, 0.05); }
+        .stars { font-size: 16px; font-weight: bold; display: block; color: #fff; }
+        .spins { font-size: 11px; color: var(--accent-color); text-transform: uppercase; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <div class="wheel-box">
+    <div class="header">
+        <span class="balance-label">Your Wallet</span>
+        <span class="balance-value">2,500 <span style="font-size: 16px;">💎</span></span>
+    </div>
+
+    <div class="wheel-container">
         <div class="arrow"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
     </div>
-    <button class="btn" id="spinBtn" onclick="spin()">КРУТИТЬ 🎰</button>
+
+    <button class="main-btn" id="spinBtn" onclick="spin()">Start Mission</button>
+
+    <div class="shop-container">
+        <div class="shop-item">
+            <span class="stars">⭐ 50</span>
+            <span class="spins">1 Spin</span>
+        </div>
+        <div class="shop-item popular">
+            <span class="stars">⭐ 120</span>
+            <span class="spins">3 Spins</span>
+        </div>
+        <div class="shop-item">
+            <span class="stars">⭐ 200</span>
+            <span class="spins">5 Spins</span>
+        </div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const sectors = ["🍑", "💋", "🔒", "📞", "💃", "📸", "📼", "💦", "🎁", "💎", "👯", "🔥"];
-        const colors = ["#880e4f", "#f06292", "#c2185b", "#f8bbd0", "#880e4f", "#f06292", "#c2185b", "#f8bbd0", "#880e4f", "#f06292", "#c2185b", "#f8bbd0"];
+        const sectors = ["🍎", "💰", "⭐", "🎲", "🚀", "💎", "⚡", "🔥", "🌈", "🏆", "🎯", "🎰"];
+        const colors = ["#1a1a2e", "#242445", "#1a1a2e", "#242445", "#1a1a2e", "#242445", "#1a1a2e", "#242445", "#1a1a2e", "#242445", "#1a1a2e", "#242445"];
 
         function drawWheel() {
             const arc = (2 * Math.PI) / sectors.length;
             for (let i = 0; i < sectors.length; i++) {
                 const angle = i * arc;
                 ctx.fillStyle = colors[i];
-                ctx.beginPath();
-                ctx.moveTo(250, 250);
-                ctx.arc(250, 250, 240, angle, angle + arc);
-                ctx.fill();
-                ctx.save();
-                ctx.translate(250, 250);
-                ctx.rotate(angle + arc / 2);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 40px Arial";
-                ctx.textAlign = "right";
-                ctx.fillText(sectors[i], 220, 15);
-                ctx.restore();
+                ctx.beginPath(); ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 240, angle, angle + arc); ctx.fill();
+                
+                // Тонкие линии-разделители
+                ctx.strokeStyle = "rgba(0, 210, 255, 0.2)";
+                ctx.lineWidth = 2; ctx.stroke();
+
+                ctx.save(); ctx.translate(250, 250); ctx.rotate(angle + arc / 2);
+                ctx.fillStyle = "white"; ctx.font = "30px Arial";
+                ctx.textAlign = "right"; ctx.fillText(sectors[i], 210, 10); ctx.restore();
             }
+            // Центральный элемент
+            ctx.fillStyle = "#00d2ff"; ctx.beginPath(); ctx.arc(250, 250, 15, 0, 2*Math.PI); ctx.fill();
         }
         drawWheel();
 
         function spin() {
             document.getElementById('spinBtn').disabled = true;
-            // Посылаем сигнал боту
             tg.sendData("spin_request");
-            
-            // Анимация кручения
-            const rotation = Math.floor(3000 + Math.random() * 3000);
+            const rotation = Math.floor(4000 + Math.random() * 4000);
             canvas.style.transform = `rotate(${rotation}deg)`;
-            
-            // Закрываем через 4 секунды
-            setTimeout(() => { tg.close(); }, 4200);
+            setTimeout(() => { tg.close(); }, 4500);
         }
-    </script>
+        tg.ready();
+        tg.expand(); // Развернуть на весь экран
+    </style>
 </body>
 </html>
