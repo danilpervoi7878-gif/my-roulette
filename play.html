@@ -1,82 +1,229 @@
- import asyncio
-import logging
-import time
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import Command
-
-# ТОКЕН И НИК АДМИНА
-API_TOKEN = 'ТВОЙ_ТОКЕН_БОТА'
-ADMIN_USERNAME = 'ТВОЙ_НИК' # Без значка @
-
-logging.basicConfig(level=logging.INFO)
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
-
-user_balances = {}
-
-prize_names = { 
-    "🖼️":"Фото", "🎥":"Видео", "🏆":"Пак 8+2", "🎰":"Пак 10+4", 
-    "💄":"Секс", "🍑":"Анал", "🔥":"Минет", "🍆":"Игрушка", 
-    "🔑":"Приватка", "☎️":"Звонок", "❤️":"Вирт"
-}
-
-def get_keyboard(user_id):
-    balance = user_balances.get(user_id, 250)
-    # Ссылка на твой GitHub Pages
-    web_app_url = f"https://danilpervoi7878-gif.github.io/my-roulette/play.html?v={int(time.time())}&balance={balance}"
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="ИГРАТЬ 🏆", web_app=WebAppInfo(url=web_app_url))]],
-        resize_keyboard=True
-    )
-
-@dp.message(Command("start"))
-async def send_welcome(message: types.Message):
-    user_id = message.from_user.id
-    if user_id not in user_balances: user_balances[user_id] = 250
-    await message.answer(
-        f"Привет! 👋\nТвой баланс: ⭐ {user_balances[user_id]}\n\nЖми кнопку ниже, чтобы начать игру!",
-        reply_markup=get_keyboard(user_id)
-    )
-
-@dp.message(F.web_app_data)
-async def get_web_app_data(message: types.Message):
-    user_id = message.from_user.id
-    try:
-        data = message.web_app_data.data.split('|')
-        price = int(data[0])
-        prize_emoji = data[1]
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Roulette Premium</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --wine: #2c0a0a; --gold: #d4af37; --soft-gold: #fcf1d1; --dark: #050505; }
         
-        if user_id in user_balances:
-            user_balances[user_id] -= price
-            if user_balances[user_id] < 0: user_balances[user_id] = 0
-            
-        prize_text = prize_names.get(prize_emoji, "Приз")
+        body { 
+            background: radial-gradient(circle at top, var(--wine) 0%, var(--dark) 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 10px 20px; color: var(--soft-gold); 
+            height: 100vh; overflow: hidden;
+        }
 
-        kb_contact = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="ЗАБРАТЬ ПРИЗ 🎁", url=f"https://t.me/{ADMIN_USERNAME}")]
-        ])
-            
-        await message.answer(
-            f"✅ **Выигрыш зафиксирован!**\n\n"
-            f"Твой приз: {prize_emoji} **{prize_text}**\n"
-            f"Списано: {price} ⭐\n"
-            f"Остаток баланса: {user_balances[user_id]} ⭐\n\n"
-            "Нажми кнопку ниже, чтобы забрать награду!",
-            reply_markup=kb_contact,
-            parse_mode="Markdown"
-        )
-        
-        await message.answer(
-            "Хочешь испытать удачу еще раз? 👇", 
-            reply_markup=get_keyboard(user_id)
-        )
+        /* 1. ИСПРАВЛЕННАЯ ШАПКА */
+        .header { 
+            background: rgba(212, 175, 55, 0.1); 
+            padding: 12px 40px; border-radius: 20px; 
+            border: 1px solid rgba(212, 175, 55, 0.4); 
+            margin-top: 15px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+            animation: balance-glow 3s infinite ease-in-out;
+        }
+        @keyframes balance-glow {
+            0%, 100% { text-shadow: 0 0 5px var(--gold); transform: scale(1); }
+            50% { text-shadow: 0 0 15px var(--gold); transform: scale(1.03); }
+        }
+        .balance { font-size: 32px; font-weight: 800; color: var(--gold); }
 
-    except Exception as e:
-        logging.error(f"Ошибка: {e}")
+        /* ИНФО-КНОПКА */
+        .info-btn {
+            position: absolute; right: 20px; top: 25px; width: 42px; height: 42px;
+            background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out;
+        }
+        @keyframes gift-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
 
-async def main():
-    await dp.start_polling(bot)
+        /* КОЛЕСО */
+        .wheel-container { position: relative; width: 330px; height: 330px; margin: 20px 0; display: flex; align-items: center; justify-content: center; }
+        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        .led { position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%); z-index: 5; }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 8px var(--gold)); }
+        .wheel-outer { width: 285px; height: 285px; border-radius: 50%; z-index: 2; border: 2px solid #000; background: #1a1a1a; overflow: hidden; }
+        #canvas { width: 100%; height: 100%; transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
 
-if __name__ == '__main__':
-    asyncio.run(main())
+        /* 3. КНОПКА С ОБВОДКОЙ */
+        .spin-btn { 
+            background: linear-gradient(135deg, #800000 0%, #d4af37 100%); 
+            color: white; border: 1px solid var(--gold); width: 90%; padding: 18px; 
+            font-size: 22px; border-radius: 16px; font-weight: 900; 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); /* Обводка свечением */
+            cursor: pointer;
+        }
+
+        .shop { display: flex; gap: 10px; width: 95%; margin-top: 15px; }
+        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 15px; text-align: center; flex: 1; transition: 0.2s; color: var(--gold); }
+        .item.active { border: 2.5px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); color: #fff; }
+
+        /* 2. НОВОЕ ОКНО ПРИЗОВ (ТЕМНОЕ И ЛИСТАЕМОЕ) */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
+        .card { 
+            background: linear-gradient(135deg, #1a0505 0%, #050505 100%); 
+            width: 85%; border-radius: 25px; padding: 25px; 
+            color: var(--soft-gold); border: 2px solid var(--gold);
+            box-shadow: 0 0 30px rgba(0,0,0,1);
+        }
+        #list { 
+            max-height: 250px; /* Ограничение высоты для скролла */
+            overflow-y: auto;  /* Включение листания */
+            padding-right: 5px;
+        }
+        /* Кастомный скроллбар для красоты */
+        #list::-webkit-scrollbar { width: 4px; }
+        #list::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+
+        .prize-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.2); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="balance" id="balText">0 ⭐</div></div>
+    <div class="info-btn" onclick="openPrizes()">🎁</div>
+    
+    <div class="wheel-container">
+        <div class="lights-ring" id="ring"></div>
+        <div class="pointer"></div>
+        <div class="wheel-outer"><canvas id="canvas" width="500" height="500"></canvas></div>
+    </div>
+    
+    <button class="spin-btn" id="mainBtn" onclick="spin()">ИГРАТЬ 🔥</button>
+    
+    <div class="shop">
+        <div class="item active" id="p50" onclick="setPrice(50)">⭐ 50</div>
+        <div class="item" id="p120" onclick="setPrice(120)">⭐ 120</div>
+        <div class="item" id="p200" onclick="setPrice(200)">⭐ 200</div>
+    </div>
+
+    <div id="winModal" class="modal">
+        <h1 style="color:var(--gold); text-align: center;">ТВОЙ ВЫИГРЫШ!</h1>
+        <div id="winEmoji" style="font-size:120px; margin:20px"></div>
+        <button class="spin-btn" style="width:240px" onclick="collect()">ЗАБРАТЬ ПРИЗ 🎁</button>
+    </div>
+
+    <div id="prizesModal" class="modal" onclick="this.style.display='none'">
+        <div class="card" onclick="event.stopPropagation()">
+            <h3 style="text-align:center; color:var(--gold); margin-top:0;">ДОСТУПНЫЕ ПРИЗЫ</h3>
+            <div id="list"></div>
+            <button class="spin-btn" style="width:100%; margin-top:15px; padding:12px" onclick="document.getElementById('prizesModal').style.display='none'">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const prizeNames = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
+        const sectors = Object.keys(prizeNames);
+        let params = new URLSearchParams(window.location.search);
+        let balance = parseInt(params.get('balance')) || 0;
+        let price = 50;
+        let rotation = 0;
+
+        document.getElementById('balText').innerText = balance + " ⭐";
+
+        function animateBalance(target) {
+            const start = balance + price;
+            const duration = 800;
+            const startTime = performance.now();
+            function update(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(start - (progress * price));
+                document.getElementById('balText').innerText = current + " ⭐";
+                if(progress < 1) requestAnimationFrame(update);
+                else document.getElementById('balText').innerText = target + " ⭐";
+            }
+            requestAnimationFrame(update);
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        function draw() {
+            const arc = (Math.PI * 2) / sectors.length;
+            ctx.save(); ctx.translate(250,250); ctx.rotate(-Math.PI/2); ctx.translate(-250,-250);
+            sectors.forEach((s, i) => {
+                ctx.fillStyle = i % 2 === 0 ? "#3d0a0a" : "#1a1a1a";
+                ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
+                ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "#fff"; ctx.font = "bold 44px Arial"; ctx.fillText(s, 180, 15); ctx.restore();
+            });
+            ctx.restore();
+        }
+
+        const ring = document.getElementById('ring');
+        for(let i=0; i<24; i++) {
+            const led = document.createElement('div');
+            led.className = 'led';
+            led.style.transformOrigin = `50% 165px`;
+            led.style.transform = `translateX(-50%) rotate(${i*15}deg)`;
+            ring.appendChild(led);
+        }
+        setInterval(() => {
+            document.querySelectorAll('.led').forEach((l, i) => {
+                l.style.opacity = (Math.floor(Date.now()/150) + i) % 3 === 0 ? "1" : "0.3";
+                l.style.boxShadow = l.style.opacity === "1" ? "0 0 10px #fff" : "none";
+            });
+        }, 50);
+
+        function setPrice(p) {
+            price = p;
+            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+            document.getElementById('p'+p).classList.add('active');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function spin() {
+            if(balance < price) return tg.showAlert("Мало звезд! ⭐");
+            document.getElementById('mainBtn').disabled = true;
+            balance -= price;
+            animateBalance(balance);
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+
+            const hapticInterval = setInterval(() => {
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }, 100);
+
+            const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0];
+            let rand = Math.random() * 100, sum = 0, target = 0;
+            for(let i=0; i<weights.length; i++) { sum += weights[i]; if(rand <= sum) { target = i; break; } }
+
+            const arc = 360 / sectors.length;
+            const stopAt = (target * arc);
+            rotation += 3600 + (360 - (rotation % 360)) + (360 - stopAt);
+            canvas.style.transform = `rotate(${rotation}deg)`;
+
+            setTimeout(() => {
+                clearInterval(hapticInterval);
+                document.getElementById('winEmoji').innerText = sectors[target];
+                document.getElementById('winModal').style.display = 'flex';
+                confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }, 5000);
+        }
+
+        function collect() {
+            const prize = document.getElementById('winEmoji').innerText;
+            tg.sendData(price + "|" + prize);
+            setTimeout(() => {
+                tg.openTelegramLink("https://t.me/ТВОЙ_НИК"); // ЗАМЕНИ НА СВОЙ НИК
+                tg.close();
+            }, 150);
+        }
+
+        function openPrizes() {
+            document.getElementById('list').innerHTML = sectors.map(s => `<div class="prize-row"><span>${s}</span> <span>${prizeNames[s]}</span></div>`).join('');
+            document.getElementById('prizesModal').style.display = 'flex';
+        }
+
+        draw(); tg.expand();
+    </script>
+</body>
+</html>
