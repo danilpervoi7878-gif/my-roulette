@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -13,71 +13,56 @@
             font-family: sans-serif; display: flex; flex-direction: column; 
             align-items: center; margin: 0; padding: 10px 20px; color: var(--soft-gold); height: 100vh; overflow: hidden;
         }
-
-        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        @keyframes gift-wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
-
-        .header { 
-            background: rgba(212, 175, 55, 0.07); padding: 10px 30px; border-radius: 20px; 
-            margin-top: 15px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(212, 175, 55, 0.3);
-            animation: breathe 3s infinite ease-in-out; transition: all 0.3s ease;
-        }
-        .header.deduct { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); transform: scale(0.9) !important; }
+        .header { background: rgba(212, 175, 55, 0.07); padding: 10px 30px; border-radius: 20px; margin-top: 15px; border: 1px solid rgba(212, 175, 55, 0.3); }
         .balance { font-size: 30px; font-weight: 800; color: var(--gold); }
-        .info-btn {
-            position: absolute; right: 20px; top: 25px; width: 42px; height: 42px;
-            background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out;
-        }
-
-        .wheel-container { position: relative; width: 330px; height: 330px; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; }
-        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); z-index: 1; }
-        .led { position: absolute; width: 7px; height: 7px; background: #fff; border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%); z-index: 5; }
-        .pointer {
-            position: absolute; top: -12px; left: 50%; transform: translateX(-50%); 
-            width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; 
-            border-top: 28px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 8px var(--gold));
-        }
-        .wheel-outer { position: relative; width: 285px; height: 285px; border-radius: 50%; z-index: 2; border: 2px solid #000; background: #1a1a1a; overflow: hidden; }
-        #canvas { width: 100%; height: 100%; transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1); }
-
-        .spin-btn { 
-            background: linear-gradient(135deg, #800000 0%, #d4af37 100%);
-            color: white; border: none; width: 90%; padding: 18px; font-size: 22px; 
-            border-radius: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-        }
-        .shop { display: flex; gap: 10px; width: 95%; margin-top: 15px; }
-        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 15px; flex: 1; text-align: center; }
-        .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); }
-
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.92); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
-        .card { background: white; width: 85%; border-radius: 25px; padding: 25px; color: #333; }
+        .info-btn { position: absolute; right: 20px; top: 25px; width: 42px; height: 42px; background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; z-index: 100; }
+        
+        .wheel-container { position: relative; width: 330px; height: 330px; margin: 20px 0; display: flex; align-items: center; justify-content: center; }
+        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 15px var(--gold); }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+        .wheel-outer { position: relative; width: 290px; height: 290px; border-radius: 50%; z-index: 2; border: 2px solid #000; overflow: hidden; }
+        #canvas { width: 100%; height: 100%; transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
+        
+        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 20px; border-radius: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.94); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
+        .card { background: white; width: 85%; border-radius: 25px; padding: 20px; color: #333; max-height: 80vh; overflow-y: auto; }
+        .prize-item { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .prize-item span:first-child { font-size: 24px; min-width: 30px; }
     </style>
 </head>
 <body>
-    <div class="header" id="headerBox">
-        <div style="font-size: 11px; opacity: 0.7;">ВАШ БАЛАНС</div>
-        <div class="balance" id="balanceText">1000 ⭐</div>
+    <div class="header">
+        <div style="font-size: 11px; opacity: 0.7; text-align: center;">БАЛАНС</div>
+        <div class="balance">1000 ⭐</div>
     </div>
     <div class="info-btn" onclick="toggleModal('prizesModal', true)">🎁</div>
 
     <div class="wheel-container">
-        <div class="lights-ring" id="lightsRing"></div>
+        <div class="lights-ring"></div>
         <div class="pointer"></div>
-        <div class="wheel-outer"><canvas id="canvas" width="500" height="500"></canvas></div>
+        <div class="wheel-outer"><canvas id="canvas" width="600" height="600"></canvas></div>
     </div>
 
     <button class="spin-btn" id="mainBtn" onclick="trySpin()">КРУТИТЬ 🔥</button>
 
-    <div class="shop">
-        <div class="item active" id="p50" onclick="setPrice(50)">⭐ 50</div>
-        <div class="item" id="p120" onclick="setPrice(120)">⭐ 120</div>
-        <div class="item" id="p200" onclick="setPrice(200)">⭐ 200</div>
+    <div id="prizesModal" class="modal">
+        <div class="card">
+            <h3 style="text-align:center; margin-top:0; color: #800000;">СПИСОК ПРИЗОВ</h3>
+            <div class="prize-item"><span>🖼️</span> <span>Фото</span></div>
+            <div class="prize-item"><span>🎥</span> <span>Видео</span></div>
+            <div class="prize-item"><span>🏆</span> <span>Пак 8+2</span></div>
+            <div class="prize-item"><span>🎰</span> <span>Пак 10+4</span></div>
+            <div class="prize-item"><span>💄</span> <span>Секс</span></div>
+            <div class="prize-item"><span>🍑</span> <span>Анал</span></div>
+            <div class="prize-item"><span>🔥</span> <span>Минет</span></div>
+            <div class="prize-item"><span>🔑</span> <span>Приватка</span></div>
+            <div class="prize-item"><span>☎️</span> <span>Звонок</span></div>
+            <div class="prize-item"><span>❤️</span> <span>Вирт</span></div>
+            <button class="spin-btn" style="width:100%; margin-top:10px;" onclick="toggleModal('prizesModal', false)">ЗАКРЫТЬ</button>
+        </div>
     </div>
 
-    <div id="prizesModal" class="modal"><div class="card"><h3 style="text-align:center">ПРИЗЫ</h3><div id="pList"></div><button class="spin-btn" style="width:100%; margin-top:15px;" onclick="toggleModal('prizesModal', false)">ЗАКРЫТЬ</button></div></div>
-    
     <div id="winModal" class="modal">
         <h2 style="color:var(--gold)">ВЫИГРЫШ!</h2>
         <div id="winEmoji" style="font-size:100px; margin:20px;"></div>
@@ -86,21 +71,14 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.setHeaderColor('#2c0a0a');
-        tg.setBackgroundColor('#050505');
-
         const params = new URLSearchParams(window.location.search);
-        let balance = parseInt(params.get('balance')) || 1000;
-        let prizeQueue = params.get('prizes') ? params.get('prizes').split(',') : ["📸"];
-        let currentPrice = 50;
-        let rotation = 0;
-        let isSpinning = false;
         let lastWinEmoji = "";
-        
-        const prizeNames = {"📸":"Фото","🎬":"Видео","🍳":"Омлет","🎁":"Пак 8+2","🎰":"Джекпот"};
-        const sectors = ["📸", "🎬", "🍳", "🎁", "🎰", "📸", "🎬", "🍳", "🎁", "🎰"];
-        
-        document.getElementById('balanceText').innerText = balance + " ⭐";
+
+        const prizeMapping = {
+            "🖼️": "photo", "🎥": "video", "🏆": "pack82", "🎰": "pack104",
+            "💄": "sex", "🍑": "anal", "🔥": "oral", "🔑": "private", "☎️": "call", "❤️": "virt"
+        };
+        const sectors = ["🖼️", "🎥", "🏆", "🎰", "💄", "🍑", "🔥", "🔑", "☎️", "❤️"];
 
         function drawWheel() {
             const canvas = document.getElementById('canvas');
@@ -108,72 +86,34 @@
             const arc = (Math.PI * 2) / sectors.length;
             sectors.forEach((s, i) => {
                 ctx.fillStyle = i % 2 === 0 ? "#4a0e0e" : "#1a1a1a";
-                ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
-                ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
-                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 42px Arial"; ctx.fillText(s, 170, 15); ctx.restore();
+                ctx.beginPath(); ctx.moveTo(300,300); ctx.arc(300,300,300, i*arc, (i+1)*arc); ctx.fill();
+                ctx.save(); ctx.translate(300,300); ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 50px Arial"; ctx.fillText(s, 190, 20); ctx.restore();
             });
         }
-
-        const ring = document.getElementById('lightsRing');
-        for (let i = 0; i < 24; i++) {
-            const led = document.createElement('div');
-            led.className = 'led'; led.style.transformOrigin = `50% 165px`;
-            led.style.transform = `translateX(-50%) rotate(${i * 15}deg)`;
-            ring.appendChild(led);
-        }
-        setInterval(() => {
-            document.querySelectorAll('.led').forEach((l, i) => {
-                l.style.opacity = (Math.floor(Date.now()/200) + i) % 3 === 0 ? "1" : "0.3";
-            });
-        }, 100);
-
-        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-        function setPrice(p) { currentPrice = p; document.querySelectorAll('.item').forEach(i => i.classList.remove('active')); document.getElementById('p'+p).classList.add('active'); }
 
         async function trySpin() {
-            if (isSpinning || balance < currentPrice) return;
-            isSpinning = true;
-            document.getElementById('mainBtn').disabled = true;
+            const prizeQueue = params.get('prizes') ? params.get('prizes').split(',') : ["🖼️"];
+            lastWinEmoji = prizeQueue[0];
+            const idx = sectors.indexOf(lastWinEmoji);
+            const arc = 360 / sectors.length;
+            const target = 3600 + (360 - (idx * arc)) - (arc / 2);
+            document.getElementById('canvas').style.transform = `rotate(${target}deg)`;
             
-            balance -= currentPrice;
-            document.getElementById('balanceText').innerText = balance + " ⭐";
-            document.getElementById('headerBox').classList.add('deduct');
-            setTimeout(() => document.getElementById('headerBox').classList.remove('deduct'), 500);
-
-            // Запускаем вращение к первому призу из очереди
-            let winEmoji = prizeQueue[0];
-            lastWinEmoji = winEmoji;
-            await runRotation(winEmoji);
-        }
-
-        function runRotation(emoji) {
-            return new Promise(resolve => {
-                const idx = sectors.indexOf(emoji);
-                const arc = 360 / sectors.length;
-                const target = 3600 + (360 - (idx * arc)) - (arc / 2);
-                rotation += target;
-                document.getElementById('canvas').style.transform = `rotate(${rotation}deg)`;
-                
-                setTimeout(() => {
-                    document.getElementById('winEmoji').innerText = emoji;
-                    toggleModal('winModal', true);
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                    resolve();
-                }, 4700);
-            });
-        }
-
-        // Функция кнопки "ЗАБРАТЬ ПРИЗ"
-        function collectAndClose() {
-            // Отправляем данные боту в формате win|смайлик
-            tg.sendData("win|" + lastWinEmoji);
-            
-            // На всякий случай дублируем закрытие через полсекунды
             setTimeout(() => {
-                tg.close();
-            }, 500);
+                document.getElementById('winEmoji').innerText = lastWinEmoji;
+                toggleModal('winModal', true);
+                confetti({ particleCount: 150, spread: 70 });
+            }, 5200);
         }
 
+        function collectAndClose() {
+            const prizeKey = prizeMapping[lastWinEmoji] || "photo";
+            tg.sendData("win|" + prizeKey);
+            setTimeout(() => tg.close(), 100);
+        }
+
+        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
         drawWheel();
         tg.expand();
         tg.ready();
