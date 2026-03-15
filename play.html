@@ -28,8 +28,9 @@
         .arrow { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 35px solid var(--gold); z-index: 10; filter: drop-shadow(0 4px 5px rgba(0,0,0,0.6)); }
         .spin-btn { background: linear-gradient(135deg, #800000 0%, #b30000 50%, #d4af37 100%); color: white; border: none; width: 90%; padding: 18px; font-size: 22px; border-radius: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 1px; }
         .spin-btn:active { transform: scale(0.96); }
+        .spin-btn:disabled { opacity: 0.6; filter: grayscale(0.5); }
         .shop { display: flex; gap: 12px; width: 100%; justify-content: center; margin-top: 10px; }
-        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 18px; text-align: center; flex: 1; transition: 0.3s; }
+        .item { background: rgba(0,0,0,0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 18px; text-align: center; flex: 1; transition: 0.3s; cursor: pointer; }
         .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); }
         #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.96); z-index:100; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
     </style>
@@ -61,11 +62,32 @@
         const sectors = ["💎", "💰", "🎟️", "🎁", "⭐", "🏆", "🔥", "🌈", "🎰", "🎯", "⚡", "🎲"];
         let currentRotation = 0;
         let isSpinning = false;
-        let selectedPrice = 50;
         function draw() { const arc = (2 * Math.PI) / sectors.length; for (let i = 0; i < sectors.length; i++) { ctx.fillStyle = (i % 2 === 0) ? "#4a0e0e" : "#1a1a1a"; ctx.beginPath(); ctx.moveTo(250, 250); ctx.arc(250, 250, 245, i * arc, (i + 1) * arc); ctx.fill(); ctx.strokeStyle = "rgba(212, 175, 55, 0.3)"; ctx.lineWidth = 2; ctx.stroke(); ctx.save(); ctx.translate(250, 250); ctx.rotate(i * arc + arc / 2); ctx.fillStyle = "#fcf1d1"; ctx.font = "bold 44px Arial"; ctx.textAlign = "right"; ctx.fillText(sectors[i], 220, 15); ctx.restore(); } }
-        function selectItem(el, price) { document.querySelectorAll('.item').forEach(i => i.classList.remove('active')); el.classList.add('active'); selectedPrice = price; if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-        function trySpin() { if (isSpinning) return; if (selectedPrice > 50) { tg.showAlert("Недостаточно баланса! ⭐"); return; } startSpin(); }
-        function startSpin() { isSpinning = true; document.getElementById('mainBtn').disabled = true; const spinAdd = Math.floor(3600 + Math.random() * 3600); currentRotation += spinAdd; canvas.style.transform = `rotate(${currentRotation}deg)`; if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); let viber = setInterval(() => { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }, 100); setTimeout(() => { clearInterval(viber); const actual = currentRotation % 360; const idx = Math.floor(((360 - (actual % 360)) % 360) / (360 / sectors.length)); document.getElementById('prize').innerText = sectors[idx]; document.getElementById('modal').style.display = 'flex'; if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); isSpinning = false; }, 4500); }
+        function selectItem(el, price) { document.querySelectorAll('.item').forEach(i => i.classList.remove('active')); el.classList.add('active'); if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+        
+        function trySpin() { 
+            if (isSpinning) return; 
+            startSpin(); 
+        }
+
+        function startSpin() { 
+            isSpinning = true; 
+            document.getElementById('mainBtn').disabled = true; 
+            const spinAdd = Math.floor(3600 + Math.random() * 3600); 
+            currentRotation += spinAdd; 
+            canvas.style.transform = `rotate(${currentRotation}deg)`; 
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); 
+            let viber = setInterval(() => { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }, 100); 
+            setTimeout(() => { 
+                clearInterval(viber); 
+                const actual = currentRotation % 360; 
+                const idx = Math.floor(((360 - (actual % 360)) % 360) / (360 / sectors.length)); 
+                document.getElementById('prize').innerText = sectors[idx]; 
+                document.getElementById('modal').style.display = 'flex'; 
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); 
+                isSpinning = false; 
+            }, 4500); 
+        }
         function collect() { tg.sendData("spin_done"); tg.close(); }
         window.onload = () => { draw(); tg.expand(); }; tg.ready();
     </script>
