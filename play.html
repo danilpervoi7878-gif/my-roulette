@@ -85,7 +85,7 @@
         tg.setBackgroundColor('#050505');
 
         const params = new URLSearchParams(window.location.search);
-        let balance = parseInt(params.get('balance')) || 0;
+        let balance = parseInt(params.get('balance')) || 1000;
         let prizeQueue = params.get('prizes') ? params.get('prizes').split(',') : ["📸"];
         let currentPrice = 50;
         let rotation = 0;
