@@ -1,33 +1,167 @@
- @dp.message(F.web_app_data)
-async def get_web_app_data(message: types.Message):
-    user_id = message.from_user.id
-    try:
-        data = message.web_app_data.data.split('|')
-        price = int(data[0])
-        prizes_list = data[1].split(',') # Список всех выпавших эмодзи
-        
-        if user_id in user_balances:
-            user_balances[user_id] -= price
-            if user_balances[user_id] < 0: user_balances[user_id] = 0
-            
-        # Формируем красивый список для сообщения
-        prizes_formatted = "\n".join([f"— {p} {prize_names.get(p, 'Приз')}" for p in prizes_list])
+ <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Roulette Premium</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --wine: #2c0a0a; --gold: #d4af37; --soft-gold: #fcf1d1; --dark: #050505; }
+        body { 
+            background: radial-gradient(circle at top, var(--wine) 0%, var(--dark) 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 5px 20px; color: var(--soft-gold); 
+            height: 100vh; overflow: hidden;
+        }
+        .header { background: rgba(212, 175, 55, 0.05); padding: 8px 35px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px; animation: balance-glow 3s infinite ease-in-out; }
+        @keyframes balance-glow { 0%, 100% { text-shadow: 0 0 5px var(--gold); } 50% { text-shadow: 0 0 15px var(--gold); } }
+        .balance { font-size: 28px; font-weight: 800; color: var(--gold); }
+        .info-btn { position: absolute; right: 15px; top: 15px; width: 40px; height: 40px; background: rgba(212, 175, 55, 0.1); border: 1.5px solid var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out; }
+        .wheel-container { position: relative; width: 320px; height: 320px; margin: 15px 0; display: flex; align-items: center; justify-content: center; }
+        .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); }
+        .led { position: absolute; width: 7px; height: 7px; background: #fff; border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%); z-index: 5; }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 8px var(--gold)); }
+        .wheel-outer { width: 280px; height: 280px; border-radius: 50%; z-index: 2; border: 2px solid #000; background: #1a1a1a; overflow: hidden; }
+        #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
+        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: 1px solid var(--gold); width: 95%; padding: 18px; font-size: 22px; border-radius: 16px; font-weight: 900; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer; }
+        .shop { display: flex; gap: 8px; width: 100%; margin-top: 15px; }
+        .item { background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.2); padding: 10px 5px; border-radius: 12px; text-align: center; flex: 1; transition: 0.2s; }
+        .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); }
+        .item-price { color: var(--gold); font-weight: bold; font-size: 16px; }
+        .item-desc { color: var(--soft-gold); font-size: 10px; opacity: 0.8; margin-top: 3px; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(15px); }
+        .card { background: linear-gradient(135deg, #1a0505 0%, #050505 100%); width: 85%; border-radius: 25px; padding: 25px; color: var(--soft-gold); border: 2px solid var(--gold); }
+        #winEmojis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px; }
+        .mini-emoji { font-size: 50px; filter: drop-shadow(0 0 10px var(--gold)); animation: pop 0.3s ease-out; }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        .status-text { color: var(--gold); font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="balance" id="balText">0 ⭐</div></div>
+    <div class="info-btn" onclick="openPrizes()">🎁</div>
+    <div class="wheel-container">
+        <div class="lights-ring" id="ring"></div>
+        <div class="pointer"></div>
+        <div class="wheel-outer"><canvas id="canvas" width="500" height="500"></canvas></div>
+    </div>
+    <div class="status-text" id="status">ВЫБЕРИ СПИНЫ</div>
+    <button class="spin-btn" id="mainBtn" onclick="trySpin()">ИГРАТЬ 🔥</button>
+    <div class="shop">
+        <div class="item active" id="p50" onclick="setPrice(50, 1)"><div class="item-price">⭐ 50</div><div class="item-desc">1 спин</div></div>
+        <div class="item" id="p120" onclick="setPrice(120, 3)"><div class="item-price">⭐ 120</div><div class="item-desc">3 спина</div></div>
+        <div class="item" id="p200" onclick="setPrice(200, 5)"><div class="item-price">⭐ 200</div><div class="item-desc">5 спинов</div></div>
+    </div>
 
-        kb_contact = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="ЗАБРАТЬ ВСЕ ПРИЗЫ 🎁", url=f"https://t.me/{ADMIN_USERNAME}")]
-        ])
-            
-        await message.answer(
-            f"🔥 **УДАЧНЫЙ ЗАХОД!**\n\n"
-            f"Ты использовал {len(prizes_list)} спинов и вот что выпало:\n"
-            f"{prizes_formatted}\n\n"
-            f"Остаток баланса: {user_balances[user_id]} ⭐\n\n"
-            "Напиши мне, чтобы забрать весь пакет!",
-            reply_markup=kb_contact,
-            parse_mode="Markdown"
-        )
-        
-        await message.answer("Крутанем еще? 👇", reply_markup=get_keyboard(user_id))
+    <div id="winModal" class="modal">
+        <h1 style="color:var(--gold); text-align: center; margin-top: 0;">ТВОИ ВЫИГРЫШИ!</h1>
+        <div id="winEmojis"></div>
+        <button class="spin-btn" style="width:260px; box-shadow: 0 0 30px var(--gold);" onclick="collect()">ЗАБРАТЬ ВСЁ 🎁</button>
+    </div>
 
-    except Exception as e:
-        logging.error(f"Ошибка: {e}")
+    <script>
+        const tg = window.Telegram.WebApp;
+        const prizeNames = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
+        const sectors = Object.keys(prizeNames);
+        let params = new URLSearchParams(window.location.search);
+        let balance = parseInt(params.get('balance')) || 0;
+        let price = 50;
+        let spinsToDoc = 1;
+        let rotation = 0;
+        let winList = [];
+
+        document.getElementById('balText').innerText = balance + " ⭐";
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        function draw() {
+            const arc = (Math.PI * 2) / sectors.length;
+            ctx.save(); ctx.translate(250,250); ctx.rotate(-Math.PI/2); ctx.translate(-250,-250);
+            sectors.forEach((s, i) => {
+                ctx.fillStyle = i % 2 === 0 ? "#3d0a0a" : "#1a1a1a";
+                ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
+                ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "#fff"; ctx.font = "bold 44px Arial"; ctx.fillText(s, 180, 15); ctx.restore();
+            });
+            ctx.restore();
+        }
+
+        const ring = document.getElementById('ring');
+        for(let i=0; i<24; i++) {
+            const led = document.createElement('div');
+            led.className = 'led';
+            led.style.transformOrigin = `50% 160px`;
+            led.style.transform = `translateX(-50%) rotate(${i*15}deg)`;
+            ring.appendChild(led);
+        }
+        setInterval(() => {
+            document.querySelectorAll('.led').forEach((l, i) => {
+                l.style.opacity = (Math.floor(Date.now()/150) + i) % 3 === 0 ? "1" : "0.3";
+                l.style.boxShadow = l.style.opacity === "1" ? "0 0 10px #fff" : "none";
+            });
+        }, 50);
+
+        function setPrice(p, s) {
+            price = p; spinsToDoc = s;
+            document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+            document.getElementById('p'+p).classList.add('active');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        async function trySpin() {
+            if(balance < price) return tg.showAlert("Мало звезд! ⭐");
+            document.getElementById('mainBtn').disabled = true;
+            balance -= price;
+            document.getElementById('balText').innerText = balance + " ⭐";
+            winList = [];
+            
+            for(let i = 0; i < spinsToDoc; i++) {
+                document.getElementById('status').innerText = `СПИН ${i+1} ИЗ ${spinsToDoc}...`;
+                await runOneSpin();
+            }
+            
+            showFinalWin();
+        }
+
+        function runOneSpin() {
+            return new Promise((resolve) => {
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0];
+                let rand = Math.random() * 100, sum = 0, target = 0;
+                for(let i=0; i<weights.length; i++) { sum += weights[i]; if(rand <= sum) { target = i; break; } }
+
+                const arc = 360 / sectors.length;
+                const stopAt = (target * arc);
+                rotation += 2160 + (360 - (rotation % 360)) + (360 - stopAt);
+                canvas.style.transform = `rotate(${rotation}deg)`;
+
+                setTimeout(() => {
+                    winList.push(sectors[target]);
+                    if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    resolve();
+                }, 4200);
+            });
+        }
+
+        function showFinalWin() {
+            const container = document.getElementById('winEmojis');
+            container.innerHTML = winList.map(s => `<div class="mini-emoji">${s}</div>`).join('');
+            document.getElementById('winModal').style.display = 'flex';
+            document.getElementById('status').innerText = "ГОТОВО!";
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
+        }
+
+        function collect() {
+            tg.sendData(price + "|" + winList.join(','));
+            setTimeout(() => {
+                tg.openTelegramLink("https://t.me/KittyCam78"); 
+                tg.close();
+            }, 150);
+        }
+
+        draw(); tg.expand();
+    </script>
+</body>
+</html>
