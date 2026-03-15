@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --wine: #2c0a0a; --gold: #d4af37; --soft-gold: #fcf1d1; --dark: #050505; }
+        
         body { 
             background: radial-gradient(circle at top, var(--wine) 0%, var(--dark) 100%);
             font-family: 'Segoe UI', Roboto, sans-serif; 
@@ -15,40 +16,90 @@
             margin: 0; padding: 5px 20px; color: var(--soft-gold); 
             height: 100vh; overflow: hidden;
         }
-        .header { background: rgba(212, 175, 55, 0.05); padding: 8px 35px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px; animation: balance-glow 3s infinite ease-in-out; }
-        @keyframes balance-glow { 0%, 100% { text-shadow: 0 0 5px var(--gold); } 50% { text-shadow: 0 0 15px var(--gold); } }
+
+        /* 1. ШАПКА В ТОН ФОНА (НЕ СЕРАЯ) */
+        .header { 
+            background: rgba(212, 175, 55, 0.05); padding: 8px 35px; border-radius: 20px; 
+            border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 10px;
+            animation: balance-glow 3s infinite ease-in-out;
+        }
+        @keyframes balance-glow {
+            0%, 100% { text-shadow: 0 0 5px var(--gold); transform: scale(1); }
+            50% { text-shadow: 0 0 15px var(--gold); transform: scale(1.03); }
+        }
         .balance { font-size: 28px; font-weight: 800; color: var(--gold); }
-        .info-btn { position: absolute; right: 15px; top: 15px; width: 40px; height: 40px; background: rgba(212, 175, 55, 0.1); border: 1.5px solid var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out; }
+
+        /* 2. ОЖИВШАЯ КНОПКА-ПОДАРОК */
+        .info-btn {
+            position: absolute; right: 15px; top: 15px; width: 40px; height: 40px;
+            background: rgba(212, 175, 55, 0.1); border: 1.5px solid var(--gold);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; z-index: 100; animation: gift-wiggle 2s infinite ease-in-out;
+            cursor: pointer;
+        }
+        @keyframes gift-wiggle { 
+            0%, 100% { transform: rotate(0deg) scale(1); } 
+            25% { transform: rotate(-10deg) scale(1.1); } 
+            75% { transform: rotate(10deg) scale(1.1); } 
+        }
+
         .wheel-container { position: relative; width: 320px; height: 320px; margin: 15px 0; display: flex; align-items: center; justify-content: center; }
         .lights-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #111; border: 4px solid var(--gold); box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); }
         .led { position: absolute; width: 7px; height: 7px; background: #fff; border-radius: 50%; top: 6px; left: 50%; transform: translateX(-50%); z-index: 5; }
         .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffffff; z-index: 110; filter: drop-shadow(0 0 8px var(--gold)); }
+        
         .wheel-outer { width: 280px; height: 280px; border-radius: 50%; z-index: 2; border: 2px solid #000; background: #1a1a1a; overflow: hidden; }
         #canvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); }
-        .spin-btn { background: linear-gradient(135deg, #800000 0%, #d4af37 100%); color: white; border: 1px solid var(--gold); width: 95%; padding: 18px; font-size: 22px; border-radius: 16px; font-weight: 900; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer; }
+
+        .spin-btn { 
+            background: linear-gradient(135deg, #800000 0%, #d4af37 100%); 
+            color: white; border: 1px solid var(--gold); width: 95%; padding: 18px; 
+            font-size: 22px; border-radius: 16px; font-weight: 900; 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer;
+        }
+
         .shop { display: flex; gap: 8px; width: 100%; margin-top: 15px; }
         .item { background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.2); padding: 10px 5px; border-radius: 12px; text-align: center; flex: 1; transition: 0.2s; }
         .item.active { border: 2px solid var(--gold); background: rgba(212, 175, 55, 0.2); transform: scale(1.05); }
         .item-price { color: var(--gold); font-weight: bold; font-size: 16px; }
         .item-desc { color: var(--soft-gold); font-size: 10px; opacity: 0.8; margin-top: 3px; }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%); z-index:1000; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(15px); }
-        .card { background: linear-gradient(135deg, #1a0505 0%, #050505 100%); width: 85%; border-radius: 25px; padding: 25px; color: var(--soft-gold); border: 2px solid var(--gold); }
+
+        .status-text { color: var(--gold); font-weight: bold; margin-bottom: 5px; font-size: 16px; text-shadow: 0 0 10px var(--gold); }
+
+        /* МОДАЛКИ — ТЕМНЫЕ И КРАСИВЫЕ */
+        .modal { 
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%); 
+            z-index:1000; flex-direction:column; align-items:center; justify-content:center; 
+            backdrop-filter: blur(15px); 
+        }
+        .card { 
+            background: linear-gradient(135deg, #1a0505 0%, #050505 100%); 
+            width: 85%; border-radius: 25px; padding: 25px; 
+            color: var(--soft-gold); border: 2px solid var(--gold); 
+        }
         #winEmojis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px; }
-        .mini-emoji { font-size: 50px; filter: drop-shadow(0 0 10px var(--gold)); animation: pop 0.3s ease-out; }
+        .mini-emoji { font-size: 55px; filter: drop-shadow(0 0 15px var(--gold)); animation: pop 0.4s ease-out; }
         @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-        .status-text { color: var(--gold); font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+        
+        #list { max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        .prize-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.2); font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="header"><div class="balance" id="balText">0 ⭐</div></div>
+    
     <div class="info-btn" onclick="openPrizes()">🎁</div>
+    
     <div class="wheel-container">
         <div class="lights-ring" id="ring"></div>
         <div class="pointer"></div>
         <div class="wheel-outer"><canvas id="canvas" width="500" height="500"></canvas></div>
     </div>
+    
     <div class="status-text" id="status">ВЫБЕРИ СПИНЫ</div>
     <button class="spin-btn" id="mainBtn" onclick="trySpin()">ИГРАТЬ 🔥</button>
+    
     <div class="shop">
         <div class="item active" id="p50" onclick="setPrice(50, 1)"><div class="item-price">⭐ 50</div><div class="item-desc">1 спин</div></div>
         <div class="item" id="p120" onclick="setPrice(120, 3)"><div class="item-price">⭐ 120</div><div class="item-desc">3 спина</div></div>
@@ -56,9 +107,17 @@
     </div>
 
     <div id="winModal" class="modal">
-        <h1 style="color:var(--gold); text-align: center; margin-top: 0;">ТВОИ ВЫИГРЫШИ!</h1>
+        <h1 style="color:var(--gold); text-align: center; margin-top: 0; text-transform: uppercase;">Твой выигрыш!</h1>
         <div id="winEmojis"></div>
         <button class="spin-btn" style="width:260px; box-shadow: 0 0 30px var(--gold);" onclick="collect()">ЗАБРАТЬ ВСЁ 🎁</button>
+    </div>
+
+    <div id="prizesModal" class="modal" onclick="this.style.display='none'">
+        <div class="card" onclick="event.stopPropagation()">
+            <h3 style="text-align:center; color:var(--gold); margin-top:0;">ДОСТУПНЫЕ ПРИЗЫ</h3>
+            <div id="list"></div>
+            <button class="spin-btn" style="width:100%; margin-top:15px; padding:12px" onclick="document.getElementById('prizesModal').style.display='none'">ЗАКРЫТЬ</button>
+        </div>
     </div>
 
     <script>
@@ -121,13 +180,17 @@
                 document.getElementById('status').innerText = `СПИН ${i+1} ИЗ ${spinsToDoc}...`;
                 await runOneSpin();
             }
-            
             showFinalWin();
         }
 
         function runOneSpin() {
             return new Promise((resolve) => {
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                
+                const hapticInterval = setInterval(() => {
+                    if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                }, 120);
+
                 const weights = [25, 25, 5, 4, 13, 13, 13, 2, 0, 0, 0];
                 let rand = Math.random() * 100, sum = 0, target = 0;
                 for(let i=0; i<weights.length; i++) { sum += weights[i]; if(rand <= sum) { target = i; break; } }
@@ -138,6 +201,7 @@
                 canvas.style.transform = `rotate(${rotation}deg)`;
 
                 setTimeout(() => {
+                    clearInterval(hapticInterval);
                     winList.push(sectors[target]);
                     if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     resolve();
@@ -161,7 +225,12 @@
             }, 150);
         }
 
-        draw(); tg.expand();
+        function openPrizes() {
+            document.getElementById('list').innerHTML = sectors.map(s => `<div class="prize-row"><span>${s}</span> <span>${prizeNames[s]}</span></div>`).join('');
+            document.getElementById('prizesModal').style.display = 'flex';
+        }
+
+        draw(); tg.expand(); tg.ready();
     </script>
 </body>
 </html>
