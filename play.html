@@ -17,7 +17,6 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* 1. ИСПРАВЛЕННАЯ ШАПКА — ТЕПЕРЬ ПРОЗРАЧНО-ЗОЛОТАЯ */
         .header { 
             background: rgba(212, 175, 55, 0.08) !important; 
             padding: 8px 35px; border-radius: 20px; 
@@ -31,7 +30,6 @@
         }
         .balance { font-size: 28px; font-weight: 800; color: var(--gold); }
 
-        /* 2. ОЖИВШАЯ КНОПКА-ПОДАРОК */
         .info-btn {
             position: absolute; right: 15px; top: 15px; width: 40px; height: 40px;
             background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--gold);
@@ -68,7 +66,6 @@
 
         .status-text { color: var(--gold); font-weight: bold; margin-bottom: 5px; font-size: 16px; text-shadow: 0 0 10px var(--gold); }
 
-        /* 3. ЯРКОЕ ОКНО ВЫИГРЫША СО СВЕЧЕНИЕМ ПРИЗА */
         .modal { 
             display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
             background: radial-gradient(circle, var(--wine) 0%, var(--dark) 100%) !important; 
@@ -83,7 +80,7 @@
         #winEmojis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px; }
         .mini-emoji { 
             font-size: 65px; 
-            filter: drop-shadow(0 0 25px var(--gold)); /* СВЕЧЕНИЕ ПРИЗА */
+            filter: drop-shadow(0 0 25px var(--gold));
             animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -107,9 +104,9 @@
     <button class="spin-btn" id="mainBtn" onclick="trySpin()">ИГРАТЬ 🔥</button>
     
     <div class="shop">
-        <div class="item active" id="p50" onclick="setPrice(50, 1)"><div class="item-price">⭐ 50</div><div class="item-desc">1 спин</div></div>
-        <div class="item" id="p120" onclick="setPrice(120, 3)"><div class="item-price">⭐ 120</div><div class="item-desc">3 спина</div></div>
-        <div class="item" id="p200" onclick="setPrice(200, 5)"><div class="item-price">⭐ 200</div><div class="item-desc">5 спинов</div></div>
+        <div class="item active" id="p160" onclick="setPrice(160, 1)"><div class="item-price">⭐ 160</div><div class="item-desc">1 спин</div></div>
+        <div class="item" id="p230" onclick="setPrice(230, 3)"><div class="item-price">⭐ 230</div><div class="item-desc">3 спина</div></div>
+        <div class="item" id="p450" onclick="setPrice(450, 5)"><div class="item-price">⭐ 450</div><div class="item-desc">5 спинов</div></div>
     </div>
 
     <div id="winModal" class="modal">
@@ -128,13 +125,13 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.setHeaderColor('#2c0a0a'); // Цвет статус-бара ТГ
+        tg.setHeaderColor('#2c0a0a'); 
         
         const prizeNames = {"🖼️":"Фото","🎥":"Видео","🏆":"Пак 8+2","🎰":"Пак 10+4","💄":"Секс","🍑":"Анал","🔥":"Минет","🍆":"Игрушка","🔑":"Приватка","☎️":"Звонок","❤️":"Вирт"};
         const sectors = Object.keys(prizeNames);
         let params = new URLSearchParams(window.location.search);
         let balance = parseInt(params.get('balance')) || 0;
-        let price = 50;
+        let price = 160; // Изначально 160
         let spinsToDoc = 1;
         let rotation = 0;
         let winList = [];
@@ -194,7 +191,6 @@
         function runOneSpin() {
             return new Promise((resolve) => {
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-                
                 const hInterval = setInterval(() => {
                     if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                 }, 130);
@@ -222,15 +218,13 @@
             container.innerHTML = winList.map(s => `<div class="mini-emoji">${s}</div>`).join('');
             document.getElementById('winModal').style.display = 'flex';
             document.getElementById('status').innerText = "ГОТОВО!";
-            
-            // 4. ГАРАНТИРОВАННЫЙ САЛЮТ
             confetti({ particleCount: 350, spread: 100, origin: { y: 0.6 } });
         }
 
         function collect() {
             tg.sendData(price + "|" + winList.join(','));
             setTimeout(() => {
-                tg.openTelegramLink("https://t.me/Rulletik_bot"); 
+                tg.openTelegramLink("https://t.me/KittyCam"); 
                 tg.close();
             }, 150);
         }
